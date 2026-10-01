@@ -152,7 +152,7 @@ export default function App() {
     }
   };
 
-  // Handlers for members
+  // Handlers for members & profiles
   const handleAddMember = (newMemberData: Omit<User, 'id' | 'createdAt'>) => {
     const newUser: User = {
       ...newMemberData,
@@ -160,6 +160,15 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
     setUsers((prev) => [...prev, newUser]);
+  };
+
+  const handleUpdateUser = (updatedUser: User) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+    );
+    if (currentUser.id === updatedUser.id) {
+      setCurrentUser(updatedUser);
+    }
   };
 
   const handleUpdateMemberPassword = (userId: string, newPass: string) => {
@@ -287,7 +296,7 @@ export default function App() {
                   }`}
                 >
                   <Users className="w-4 h-4 text-sky-400" />
-                  <span className="hidden md:inline">Members</span>
+                  <span className="hidden md:inline">Users & Admins</span>
                   <span className="px-1.5 py-0.2 rounded-full bg-slate-700 text-[10px] font-mono">
                     {users.length}
                   </span>
@@ -378,12 +387,14 @@ export default function App() {
           />
         )}
 
-        {/* VIEW 2: MEMBERS MANAGEMENT (Admin Only) */}
+        {/* VIEW 2: USERS & ADMIN MANAGEMENT (Admin Only) */}
         {activeView === 'members' && isAdmin && (
           <AdminMembers
             members={users}
             cards={cards}
+            currentUserId={currentUser.id}
             onAddMember={handleAddMember}
+            onUpdateUser={handleUpdateUser}
             onUpdateMemberPassword={handleUpdateMemberPassword}
             onAssignCard={handleAssignCard}
             onDeleteMember={handleDeleteMember}

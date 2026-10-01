@@ -8,7 +8,12 @@ export interface User {
   password?: string;
   assignedCardId?: string;
   status: 'active' | 'paused';
+  phone?: string;
+  designation?: string;
+  avatarUrl?: string;
+  bio?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface BannerSlide {
