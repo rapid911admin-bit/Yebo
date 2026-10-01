@@ -17,6 +17,7 @@ import {
   Database,
   LogIn,
   LogOut,
+  ScanFace,
   Sparkles,
   Check,
   Copy,
@@ -189,6 +190,11 @@ export default function App() {
     showToast('Member removed.');
   };
 
+  const handleLogout = () => {
+    showToast('Signed out successfully.');
+    setShowAuthModal(true);
+  };
+
   // Lead submission from public card
   const handleLeadSubmit = (leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>) => {
     const newLead: LeadInquiry = {
@@ -332,14 +338,19 @@ export default function App() {
               </span>
             )}
 
-            {/* Current user pill & Switch account */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+            {/* Current user pill, Biometric icon & Logout button */}
+            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
               <button
                 onClick={() => setShowAuthModal(true)}
                 className="flex items-center gap-2 py-1 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs text-slate-200 transition-colors"
+                title="Switch Account or Face ID"
               >
-                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px]">
-                  {currentUser.name.charAt(0)}
+                <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px] overflow-hidden shrink-0">
+                  {currentUser.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                  ) : (
+                    currentUser.name.charAt(0)
+                  )}
                 </div>
                 <div className="text-left hidden sm:block">
                   <div className="text-xs font-bold text-white flex items-center gap-1">
@@ -351,6 +362,24 @@ export default function App() {
                     )}
                   </div>
                 </div>
+              </button>
+
+              {/* Biometric Scan Quick Access */}
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-colors"
+                title="Face ID & Biometric Sign In"
+              >
+                <ScanFace className="w-4 h-4" />
+              </button>
+
+              {/* Explicit Sign Out / Log Out Button */}
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-800/50 text-slate-400 hover:text-red-400 transition-colors"
+                title="Sign Out / Log Out"
+              >
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           </div>
