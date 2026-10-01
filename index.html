@@ -258,18 +258,31 @@ function setPw(done,skip){
     const {error}=await db.auth.updateUser({password:a,data:{has_pw:true}});if(error)return toast(error.message);toast("Password saved");done()};
   $("#pk").onclick=skip||done;
 }
+async function info(u,c){
+  const link=location.origin+"/"+c.slug;
+  app.innerHTML=`<div class="pg"><div class="hd"><button class="ic" id="bk" aria-label="Back">${IC.back}</button><h1 class="brand">${esc(c.name)}</h1></div>
+   <div class="grp"><div class="mh"><div style="min-width:0"><b>Your card link</b><p class="mu" style="overflow-wrap:anywhere">${esc(link)}</p></div><em class="pill${c.published?" live":""}">${c.published?"Live":"Draft"}</em></div>
+    <a class="btn" href="?c=${esc(c.slug)}" target="_blank" rel="noopener">View card</a><button class="btn alt" id="cl">Copy link</button></div>
+   <div class="grp" id="st"><h2>Activity</h2><p class="mu">Loading…</p></div>
+   <p class="mu">Your administrator manages what appears on your card. Contact them to change anything.</p></div>`;
+  $("#bk").onclick=()=>location.hash?history.back():list(u);
+  $("#cl").onclick=()=>navigator.clipboard.writeText(link).then(()=>toast("Link copied"),()=>toast("Copy failed"));
+  const {data:s}=await db.rpc("card_stats",{p_card:c.id});
+  const {data:l}=await db.from("leads").select("name,message").eq("card_id",c.id).order("created_at",{ascending:false}).limit(10);
+  $("#st").innerHTML="<h2>Activity</h2>"+((s||[]).map(r=>`<div class="kv"><span>${esc(r.kind)}</span><b>${r.n}</b></div>`).join("")||'<p class="mu">No activity yet.</p>')+"<h2>Latest enquiries</h2>"+((l||[]).map(x=>`<p class="mu"><b>${esc(x.name||"Someone")}</b>: ${esc(x.message)}</p>`).join("")||'<p class="mu">None yet.</p>');
+}
 function go(name,fn){if(location.hash!=="#/"+name)history.pushState(null,"","#/"+name);scrollTo(0,0);fn()}
 window.addEventListener("popstate",()=>{if(!ME)return;scrollTo(0,0);const h=location.hash;h=="#/members"&&ME.role=="admin"?members(U):h=="#/new"?pick(U):list(U)});
 async function list(u){
   let q=db.from("cards").select("*").order("created_at");if(ME.role!="admin")q=q.eq("owner_email",ME.email);
   const {data,error}=await q;
   if(error){app.innerHTML=`<div class="pg"><h1 class="brand">Something went wrong</h1><p class="mu">${esc(error.message)}</p><button class="btn" id="rt">Try again</button></div>`;$("#rt").onclick=()=>list(u);return}
-  const adm=ME.role=="admin",rows=data||[],can=adm||rows.length<ME.max_cards;
+  const adm=ME.role=="admin",rows=data||[],can=adm;
   app.innerHTML=`<div class="pg"><div class="hd"><h1 class="brand">${adm?"All cards":"Your cards"}</h1></div>
    <div class="tabs2">${adm?'<button id="mm">Members</button>':""}<button id="cp">Change password</button><button id="so">Sign out</button></div>
-   ${rows.length?rows.map((c,i)=>`<button class="act" data-i="${i}"><span>${esc(c.name)}<small>${esc(location.host)}/${esc(c.slug)}${adm?" · "+esc(c.owner_email):""}</small></span><em class="pill${c.published?" live":""}">${c.published?"Live":"Draft"}</em><b class="go"></b></button>`).join(""):'<div class="empty"><b>No cards yet</b><p class="mu">Create your first digital card in a minute.</p></div>'}
-   ${can?'<div class="dock"><button class="btn" id="nw">New card</button></div>':'<p class="mu">You have reached your card limit. Ask your administrator for more.</p>'}</div>`;
-  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>go("edit",()=>edit(u,rows[b.dataset.i])));
+   ${rows.length?rows.map((c,i)=>`<button class="act" data-i="${i}"><span>${esc(c.name)}<small>${esc(location.host)}/${esc(c.slug)}${adm?" · "+esc(c.owner_email):""}</small></span><em class="pill${c.published?" live":""}">${c.published?"Live":"Draft"}</em><b class="go"></b></button>`).join(""):'<div class="empty"><b>No cards yet</b><p class="mu">${adm?"Create the first digital card in a minute.":"Your administrator will set up your card."}</p></div>'}
+   ${can?'<div class="dock"><button class="btn" id="nw">New card</button></div>':'<p class="mu">Your administrator manages your card. Contact them if you want anything changed.</p>'}</div>`;
+  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>go("edit",()=>adm?edit(u,rows[b.dataset.i]):info(u,rows[b.dataset.i])));
   if(can)$("#nw").onclick=()=>go("new",()=>pick(u));
   if(adm)$("#mm").onclick=()=>go("members",()=>members(u));
   $("#cp").onclick=()=>go("password",()=>setPw(()=>history.back()));
@@ -286,20 +299,19 @@ async function members(u){
   const invite=(m,pw)=>navigator.clipboard.writeText(`Hi${m.name?" "+m.name:""}! Your YeboCard account is ready.\nWebsite: ${location.origin}\nEmail: ${m.email}\n${pw?"Password: "+pw+"\nYou can change it after signing in.":"The first time, tap \"Email me a code\" on the sign-in page."}`).then(()=>{toast("Invite message copied");return true},()=>{toast("Copy failed");return false});
   app.innerHTML=`<div class="pg"><div class="hd"><button class="ic" id="bk" aria-label="Back">${IC.back}</button><h1 class="brand">Members</h1></div>
    <div class="grp"><h2>Onboard a member</h2><label>Email<input id="me" type="email" inputmode="email" placeholder="client@business.co.za"></label>
-    <label>Name or business<input id="mn"></label><label>Cards allowed<input id="mc" type="number" min="0" value="3"></label>
+    <label>Name or business<input id="mn"></label>
     <label>Role<select id="mr"><option>member</option><option>admin</option></select></label><label>Password (optional)<input id="mp" placeholder="Leave blank to use an email code"></label><button class="btn alt" id="mg">Generate password</button><button class="btn" id="ma">Add member</button></div>
    ${(ms||[]).map((m,i)=>`<div class="grp"><div class="mh"><div style="min-width:0"><b>${esc(m.name||m.email)}</b><p class="mu" style="overflow:hidden;text-overflow:ellipsis">${esc(m.email)} · ${m.role}</p></div><em class="pill${m.active?" live":""}">${m.active?"Active":"Paused"}</em></div>
-    <label>Cards allowed<input type="number" min="0" value="${m.max_cards}" data-mc="${i}"></label>
+    
     <button class="btn alt" data-sp="${i}">Set or reset password</button><div class="f" data-pw="${i}" hidden><input data-pi="${i}" placeholder="New password (8+ characters)" aria-label="New password"><button class="btn alt" data-gn="${i}">Generate</button><button class="btn" data-ps="${i}">Save password</button></div><button class="btn alt" data-iv="${i}">Copy invite message</button>
     <button class="btn alt" data-ac="${i}"${m.email==ME.email?" disabled":""}>${m.active?"Pause access":"Restore access"}</button></div>`).join("")}</div>`;
   $("#bk").onclick=()=>location.hash?history.back():list(u);
   $("#ma").onclick=async()=>{const email=$("#me").value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email))return toast("Enter a valid email");
     const pw=$("#mp").value.trim();if(pw&&pw.length<8)return toast("Password must be at least 8 characters");
-    const m={email,name:$("#mn").value.trim(),role:$("#mr").value,max_cards:Math.max(0,+$("#mc").value||0)};
+    const m={email,name:$("#mn").value.trim(),role:$("#mr").value};
     const {error}=await db.from("members").insert(m);if(error)return toast(error.code=="23505"?"Already a member":error.message);
     if(pw){const err=await setPassword(email,pw);if(err)toast("Member added, but the password was not set: "+err);else await invite(m,pw)}else await invite(m);
     members(u)};
-  app.querySelectorAll("[data-mc]").forEach(i=>i.onchange=async()=>{const {error}=await db.from("members").update({max_cards:Math.max(0,+i.value||0)}).eq("email",ms[i.dataset.mc].email);toast(error?error.message:"Updated")});
   app.querySelectorAll("[data-iv]").forEach(b=>b.onclick=()=>invite(ms[b.dataset.iv]));
   $("#mg").onclick=()=>{$("#mp").value=gen()};
   app.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>{const f=app.querySelector(`[data-pw="${b.dataset.sp}"]`);f.hidden=!f.hidden});
@@ -334,6 +346,7 @@ const TPL=[
 {k:"free",n:"Freelancer or creative",ac:"#22303c",ph:["e.g. Lerato Sithole","Photographer and video creator"],b:["Now booking new projects","Portfolio and rates on request"],c:["Weddings","Portraits","Brand work"],t:[["Portfolio","Link to your Instagram, Behance or website."],["Rates","Share package prices or ask people to enquire."]]},
 {k:"church",n:"Church or community group",ac:"#7c2d12",ph:["e.g. Grace Community Church","Sunday services and outreach, Soweto"],b:["Join us this Sunday","Registrations are open"],c:["Services","Youth","Outreach"],t:[["Service times","List your weekly times."],["Give and support","Add banking details or a donation link."]]}];
 function pick(u){
+  if(ME.role!="admin")return list(u);
   app.innerHTML=`<div class="pg"><div class="hd"><button class="ic" id="bk" aria-label="Back">${IC.back}</button><h1 class="brand">Choose a starter</h1></div>
    <p class="mu">Pick the closest match. You can change everything afterwards.</p>
    <div class="tiles">${TPL.map((t,i)=>`<button class="tile" data-i="${i}" style="--c:${t.ac}"><b>${esc(t.n)}</b><small>${esc(t.c.slice(0,3).join(" · "))}</small></button>`).join("")}</div></div>`;
@@ -343,6 +356,7 @@ function pick(u){
 }
 const COLS=["#0a7d5a","#0a6c8f","#1e3a8a","#7a4bd1","#a21caf","#b3261e","#c2410c","#22303c"];
 async function edit(u,c){
+  if(ME.role!="admin")return list(u);
   c={name:"",role:"",slug:"",accent:"#0a7d5a",theme:"auto",banners:[],chips:[],tabs:[],published:false,...c};
   const OW=ME.role=="admin"?(await db.from("members").select("email,name").eq("active",true).order("email")).data:null;
   const up=async(file,max,type)=>{const ext=type=="image/png"?"png":"jpg",path=`${u.id}/${crypto.randomUUID()}.${ext}`;
