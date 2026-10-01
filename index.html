@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f1f3f6">
 <title>YeboCard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -112,6 +113,16 @@ label,.lb{display:grid;gap:6px;font-size:13px;font-weight:500;color:var(--mu)}
 #qr{justify-self:center;min-height:60px;padding:14px;background:#fff;border:1px solid var(--ln);border-radius:16px}
 .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));z-index:10;max-width:calc(100% - 32px);transform:translateX(-50%);padding:11px 18px;border-radius:999px;background:var(--tx);color:var(--bg);font-size:14px;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
 .toast.on{opacity:1}
+html{scroll-behavior:smooth}
+#app>*,.pg>*{min-width:0}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:2px 16px;scrollbar-width:none}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{flex:none;min-height:40px;padding:0 16px;border:1px solid var(--ln);border-radius:999px;background:var(--surf);color:var(--tx);font:inherit;font-size:14px;font-weight:500}
+.empty{display:grid;gap:4px;padding:32px 16px;text-align:center;background:var(--surf);border:1px dashed var(--ln);border-radius:16px}
+.cta{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--ln)}
+.cta .btn{flex:1;max-width:232px}
+.wrap.cta-pad{padding-bottom:104px}
+@media (max-width:360px){.hero{padding:16px}.bar,.tiles{grid-template-columns:1fr}}
 @media (hover:hover){.act:hover,.btn:hover{transform:translateY(-1px)}.btn.alt:hover{border-color:var(--ac)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -152,11 +163,12 @@ const isDark=()=>(document.documentElement.dataset.theme||(matchMedia("(prefers-
 
 /* ---------- Public card ---------- */
 async function view(slug){
-  const {data:c}=await db.from("cards").select("*").eq("slug",slug).maybeSingle();
-  if(!c){app.innerHTML='<div class="pg"><h1 class="brand">Card not found</h1><p class="mu">This link is not active.</p></div>';return}
+  const {data:c,error:ce}=await db.from("cards").select("*").eq("slug",slug).maybeSingle();
+  if(!c){app.innerHTML=`<div class="pg"><h1 class="brand">${ce?"Could not load":"Card not found"}</h1><p class="mu">${ce?"Check your connection and try again.":"This link is not active."}</p></div>`;return}
   document.title=c.name;
   const th=store.get("yc_theme")||(c.theme!=="auto"?c.theme:"");if(th)document.documentElement.dataset.theme=th;
   document.documentElement.style.setProperty("--ac",/^#[0-9a-f]{6}$/i.test(c.accent)?c.accent:"#0a7d5a");
+  {const m=$("meta[name=theme-color]");if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue("--ac").trim()}
   const log=k=>{if(c.published)db.from("events").insert({card_id:c.id,kind:k}).then(()=>{},()=>{})};
   log("view");
   const A=[];
@@ -177,7 +189,9 @@ async function view(slug){
   ${(c.chips||[]).length?`<div class="chips">${c.chips.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
   <details><summary>Send an enquiry</summary><div class="f"><input id="en" aria-label="Your name" placeholder="Your name"><textarea id="em" aria-label="Message" placeholder="How can we help?" maxlength="1000"></textarea><button class="btn" id="es">Send</button></div></details>
   ${(c.tabs||[]).map((t,i)=>`<details${i?"":" open"}><summary>${esc(t.title)}</summary><div>${esc(t.body)}</div></details>`).join("")}
+  ${(c.phone||c.whatsapp)?`<div class="cta">${c.phone?`<a class="btn" data-k="call" href="tel:+${digits(c.phone)}">Call</a>`:""}${c.whatsapp?`<a class="btn${c.phone?" alt":""}" data-k="whatsapp" href="https://wa.me/${digits(c.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`:""}</div>`:""}
   <div class="ft">Made with YeboCard</div>`;
+  if(c.phone||c.whatsapp)$(".wrap").classList.add("cta-pad");
   const paint=()=>{$("#th").innerHTML=isDark()?IC.sun:IC.moon};paint();
   $("#th").onclick=()=>{const n=isDark()?"light":"dark";document.documentElement.dataset.theme=n;store.set("yc_theme",n);paint()};
   if(B.length>1){const sl=[...app.querySelectorAll(".sl")],dt=[...app.querySelectorAll(".dots button")],bn=$("#bn");let i=0,t,x0=null;
@@ -206,10 +220,10 @@ async function view(slug){
 }
 
 /* ---------- Owner dashboard ---------- */
-let ME=null;
+let ME=null,U=null;
 async function admin(){
   const {data:{session}}=await db.auth.getSession();
-  if(location.hash.includes("access_token"))history.replaceState(null,"",location.pathname);
+  if(location.hash)history.replaceState(null,"",location.pathname+location.search);
   if(!session){
     app.innerHTML=`<div class="pg"><h1 class="brand">YeboCard</h1><p class="mu" id="lt">Sign in with your email and password.</p>
       <div class="grp"><input id="lm" type="email" autocomplete="username" placeholder="you@business.co.za" aria-label="Email">
@@ -232,7 +246,7 @@ async function admin(){
   if(!me||!me.active){
     app.innerHTML=`<div class="pg"><h1 class="brand">Not activated yet</h1><p class="mu">${esc(email)} has not been set up on YeboCard. Please ask your administrator to add you.</p><button class="btn alt" id="so">Sign out</button></div>`;
     $("#so").onclick=async()=>{await db.auth.signOut();admin()};return}
-  ME=me;
+  ME=me;U=session.user;
   if(!session.user.user_metadata?.has_pw&&store.get("yc_skippw")!=email)return setPw(()=>list(session.user),()=>{store.set("yc_skippw",email);list(session.user)});
   list(session.user)
 }
@@ -244,18 +258,22 @@ function setPw(done,skip){
     const {error}=await db.auth.updateUser({password:a,data:{has_pw:true}});if(error)return toast(error.message);toast("Password saved");done()};
   $("#pk").onclick=skip||done;
 }
+function go(name,fn){if(location.hash!=="#/"+name)history.pushState(null,"","#/"+name);scrollTo(0,0);fn()}
+window.addEventListener("popstate",()=>{if(!ME)return;scrollTo(0,0);const h=location.hash;h=="#/members"&&ME.role=="admin"?members(U):h=="#/new"?pick(U):list(U)});
 async function list(u){
   let q=db.from("cards").select("*").order("created_at");if(ME.role!="admin")q=q.eq("owner_email",ME.email);
-  const {data}=await q,adm=ME.role=="admin",can=adm||(data||[]).length<ME.max_cards;
-  app.innerHTML=`<div class="pg"><h1 class="brand">${adm?"All cards":"Your cards"}</h1>
-   ${(data||[]).map((c,i)=>`<button class="act" data-i="${i}"><span>${esc(c.name)}<small>${esc(location.host)}/${esc(c.slug)}${adm?" · "+esc(c.owner_email):""}</small></span><em class="pill${c.published?" live":""}">${c.published?"Live":"Draft"}</em><b class="go"></b></button>`).join("")}
-   ${can?'<button class="btn" id="nw">New card</button>':'<p class="mu">You have reached your card limit. Ask your administrator for more.</p>'}
-   ${adm?'<button class="btn alt" id="mm">Members</button>':""}<button class="btn alt" id="cp">Change password</button><button class="btn alt" id="so">Sign out</button></div>`;
-  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>edit(u,data[b.dataset.i]));
-  if(can)$("#nw").onclick=()=>pick(u);
-  if(adm)$("#mm").onclick=()=>members(u);
-  $("#cp").onclick=()=>setPw(()=>list(u));
-  $("#so").onclick=async()=>{await db.auth.signOut();ME=null;admin()};
+  const {data,error}=await q;
+  if(error){app.innerHTML=`<div class="pg"><h1 class="brand">Something went wrong</h1><p class="mu">${esc(error.message)}</p><button class="btn" id="rt">Try again</button></div>`;$("#rt").onclick=()=>list(u);return}
+  const adm=ME.role=="admin",rows=data||[],can=adm||rows.length<ME.max_cards;
+  app.innerHTML=`<div class="pg"><div class="hd"><h1 class="brand">${adm?"All cards":"Your cards"}</h1></div>
+   <div class="tabs2">${adm?'<button id="mm">Members</button>':""}<button id="cp">Change password</button><button id="so">Sign out</button></div>
+   ${rows.length?rows.map((c,i)=>`<button class="act" data-i="${i}"><span>${esc(c.name)}<small>${esc(location.host)}/${esc(c.slug)}${adm?" · "+esc(c.owner_email):""}</small></span><em class="pill${c.published?" live":""}">${c.published?"Live":"Draft"}</em><b class="go"></b></button>`).join(""):'<div class="empty"><b>No cards yet</b><p class="mu">Create your first digital card in a minute.</p></div>'}
+   ${can?'<div class="dock"><button class="btn" id="nw">New card</button></div>':'<p class="mu">You have reached your card limit. Ask your administrator for more.</p>'}</div>`;
+  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>go("edit",()=>edit(u,rows[b.dataset.i])));
+  if(can)$("#nw").onclick=()=>go("new",()=>pick(u));
+  if(adm)$("#mm").onclick=()=>go("members",()=>members(u));
+  $("#cp").onclick=()=>go("password",()=>setPw(()=>history.back()));
+  $("#so").onclick=async()=>{await db.auth.signOut();ME=null;U=null;history.replaceState(null,"",location.pathname);admin()};
 }
 const gen=()=>{const c="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from(crypto.getRandomValues(new Uint32Array(10)),n=>c[n%c.length]).join("")};
 async function setPassword(email,password){
@@ -274,7 +292,7 @@ async function members(u){
     <label>Cards allowed<input type="number" min="0" value="${m.max_cards}" data-mc="${i}"></label>
     <button class="btn alt" data-sp="${i}">Set or reset password</button><div class="f" data-pw="${i}" hidden><input data-pi="${i}" placeholder="New password (8+ characters)" aria-label="New password"><button class="btn alt" data-gn="${i}">Generate</button><button class="btn" data-ps="${i}">Save password</button></div><button class="btn alt" data-iv="${i}">Copy invite message</button>
     <button class="btn alt" data-ac="${i}"${m.email==ME.email?" disabled":""}>${m.active?"Pause access":"Restore access"}</button></div>`).join("")}</div>`;
-  $("#bk").onclick=()=>list(u);
+  $("#bk").onclick=()=>location.hash?history.back():list(u);
   $("#ma").onclick=async()=>{const email=$("#me").value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email))return toast("Enter a valid email");
     const pw=$("#mp").value.trim();if(pw&&pw.length<8)return toast("Password must be at least 8 characters");
     const m={email,name:$("#mn").value.trim(),role:$("#mr").value,max_cards:Math.max(0,+$("#mc").value||0)};
@@ -319,9 +337,9 @@ function pick(u){
   app.innerHTML=`<div class="pg"><div class="hd"><button class="ic" id="bk" aria-label="Back">${IC.back}</button><h1 class="brand">Choose a starter</h1></div>
    <p class="mu">Pick the closest match. You can change everything afterwards.</p>
    <div class="tiles">${TPL.map((t,i)=>`<button class="tile" data-i="${i}" style="--c:${t.ac}"><b>${esc(t.n)}</b><small>${esc(t.c.slice(0,3).join(" · "))}</small></button>`).join("")}</div></div>`;
-  $("#bk").onclick=()=>list(u);
+  $("#bk").onclick=()=>location.hash?history.back():list(u);
   app.querySelectorAll(".tile").forEach(b=>b.onclick=()=>{const t=TPL[b.dataset.i];
-    edit(u,{biz_type:t.k,accent:t.ac,banners:t.b.map(x=>({text:x,image_url:""})),chips:t.c,tabs:t.t.map(x=>({title:x[0],body:x[1]})),ph:t.ph,tn:t.n,hint:t.h})});
+    go("edit",()=>edit(u,{biz_type:t.k,accent:t.ac,banners:t.b.map(x=>({text:x,image_url:""})),chips:t.c,tabs:t.t.map(x=>({title:x[0],body:x[1]})),ph:t.ph,tn:t.n,hint:t.h}))});
 }
 const COLS=["#0a7d5a","#0a6c8f","#1e3a8a","#7a4bd1","#a21caf","#b3261e","#c2410c","#22303c"];
 async function edit(u,c){
@@ -353,7 +371,7 @@ async function edit(u,c){
   $("#seg").onclick=e=>{const t=e.target.dataset.t;if(t){$("#theme").value=t;[...$("#seg").children].forEach(b=>b.classList.toggle("on",b.dataset.t==t))}};
   $("#hero").onchange=async e=>{if(!e.target.files[0])return;try{toast("Uploading…");c.hero_url=await upImg(e.target.files[0],"hero");$("#hp").src=c.hero_url;$("#hp").hidden=false;$("#hrm").hidden=false;$("#hbt").textContent="Change image"}catch(x){toast(x.message)}};
   $("#hrm").onclick=()=>{c.hero_url=null;$("#hp").hidden=true;$("#hrm").hidden=true;$("#hbt").textContent="Upload image"};
-  $("#bk").onclick=()=>list(u);
+  $("#bk").onclick=()=>location.hash?history.back():list(u);
   $("#ab").onclick=()=>{if(c.banners.length<5){c.banners.push({text:"",image_url:""});drawB()}};
   $("#at").onclick=()=>{if(c.tabs.length<6){c.tabs.push({title:"",body:""});drawT()}};
   $("#bns").addEventListener("input",e=>{if(e.target.dataset.bt!=null)c.banners[e.target.dataset.bt].text=e.target.value});
@@ -363,7 +381,7 @@ async function edit(u,c){
   $("#tbs").addEventListener("input",e=>{const d=e.target.dataset;if(d.tt!=null)c.tabs[d.tt].title=e.target.value;if(d.tb!=null)c.tabs[d.tb].body=e.target.value});
   $("#tbs").addEventListener("click",e=>{if(e.target.dataset.tx!=null){c.tabs.splice(e.target.dataset.tx,1);drawT()}});
   $("#logo").onchange=async e=>{if(!e.target.files[0])return;try{toast("Uploading…");c.logo_url=await upImg(e.target.files[0],"logo");$("#lp").src=c.logo_url;$("#lp").hidden=false;$("#lp").nextElementSibling.firstElementChild.textContent="Change logo"}catch(x){toast(x.message)}};
-  $("#sv").onclick=async()=>{const v=id=>$("#"+id).value.trim()||null;
+  const save=async()=>{const v=id=>$("#"+id).value.trim()||null;
     const p={biz_type:c.biz_type||"other",contact_name:v("contact_name"),designation:v("designation"),website:normUrl(v("website")),hero_url:c.hero_url||null,name:v("name"),role:v("role")||"",slug:slugify(v("slug")||v("name")),phone:v("phone"),whatsapp:v("whatsapp"),email:v("email"),address:v("address"),panic_phone:v("panic_phone"),
       chips:$("#chips").value.split(",").map(x=>x.trim()).filter(Boolean),accent:$("#accent").value,theme:$("#theme").value,logo_url:c.logo_url||null,
       banners:c.banners.filter(b=>b.text||b.image_url),tabs:c.tabs.filter(t=>t.title||t.body),published:$("#pub").checked};
@@ -376,6 +394,7 @@ async function edit(u,c){
     const q=c.id?await db.from("cards").update(p).eq("id",c.id).select().single():await db.from("cards").insert(p).select().single();
     if(q.error)return toast(q.error.code=="23505"?"That link name is taken":q.error.message);
     toast("Saved");edit(u,q.data)};
+  $("#sv").onclick=async()=>{const b=$("#sv");b.disabled=true;b.textContent="Saving…";await save();if(b.isConnected){b.disabled=false;b.textContent="Save"}};
   if(c.id){
     const {data:s}=await db.rpc("card_stats",{p_card:c.id});
     const {data:l}=await db.from("leads").select("name,message").eq("card_id",c.id).order("created_at",{ascending:false}).limit(10);
