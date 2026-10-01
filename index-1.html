@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>YeboCard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f3f6;--surf:#fff;--tx:#101828;--mu:#5d6b7c;--ln:#e3e8ee;--sh:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.05);--ac:#0a7d5a;--on:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1118;--surf:#151f2b;--tx:#eef3f8;--mu:#9db0c2;--ln:#243447;--sh:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#0b1118;--surf:#151f2b;--tx:#eef3f8;--mu:#9db0c2;--ln:#243447;--sh:0 1px 2px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+body{margin:0;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);background:var(--bg);color:var(--tx);font:16px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:440px;margin:0 auto;padding:0 16px 32px}
+h1,h2,.brand{font-family:"Bricolage Grotesque",Inter,system-ui,sans-serif;letter-spacing:-.02em}
+h2{margin:0;font-size:17px}
+button{cursor:pointer}
+:is(button,a,select,summary,input,textarea):focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mu{color:var(--mu);margin:0}
+.top{display:flex;justify-content:flex-end;padding:12px 0}
+.ic{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--ln);border-radius:12px;background:var(--surf);color:var(--tx)}
+#app,.pg{display:grid;gap:14px}
+.pg{padding-top:20px}.brand{font-weight:800;font-size:24px;margin:0}
+.hero{background:var(--ac);background:linear-gradient(155deg,var(--ac),color-mix(in srgb,var(--ac) 50%,#000));color:#fff;border-radius:24px;padding:20px;display:grid;gap:16px;box-shadow:var(--sh)}
+.logo{width:60px;height:60px;border-radius:16px;overflow:hidden;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.32);display:grid;place-items:center;font:800 21px "Bricolage Grotesque",sans-serif}
+.logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.hero h1{margin:0;font-size:clamp(24px,7vw,30px);line-height:1.1;overflow-wrap:anywhere}
+.hero p{margin:6px 0 0;opacity:.92;font-size:15px}
+.banner{display:flex;align-items:flex-end;min-height:58px;padding:10px 14px;border-radius:14px;background:rgba(0,0,0,.25) center/cover;font-size:14px;line-height:1.35}
+.banner.tall{min-height:140px}
+.bar{display:grid;grid-template-columns:1.35fr 1fr;gap:8px}
+.btn,.bar button{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border:1px solid var(--ac);border-radius:12px;background:var(--ac);color:var(--on);font:inherit;font-weight:600;text-decoration:none}
+.btn.alt,.bar button.alt{background:var(--surf);color:var(--tx);border-color:var(--ln)}
+.acts{display:grid;gap:10px}
+.act{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px 14px;background:var(--surf);border:1px solid var(--ln);border-radius:16px;box-shadow:var(--sh);color:var(--tx);text-decoration:none;font:inherit;font-weight:600;text-align:left}
+.act i{flex:none;width:40px;height:40px;border-radius:12px;background:var(--ac);color:var(--on);display:grid;place-items:center}
+.act span{flex:1;min-width:0;line-height:1.25}
+.act small{display:block;margin-top:2px;font-size:14px;font-weight:400;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.go{flex:none;width:8px;height:8px;margin-right:4px;border-top:2px solid var(--mu);border-right:2px solid var(--mu);transform:rotate(45deg)}
+.act.sos{background:#b42318;border-color:#b42318;color:#fff}.act.sos i{background:rgba(255,255,255,.2)}.act.sos small{color:#ffd9d6}.act.sos .go{border-color:#ffd9d6}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:2px 16px;scrollbar-width:none}
+.chips span{flex:none;padding:8px 14px;background:var(--surf);border:1px solid var(--ln);border-radius:999px;font-size:14px;font-weight:500}
+details,.grp{background:var(--surf);border:1px solid var(--ln);border-radius:16px;box-shadow:var(--sh)}
+details{overflow:hidden}
+summary{display:flex;align-items:center;justify-content:space-between;min-height:54px;padding:0 16px;font-weight:600;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";width:8px;height:8px;margin-top:-3px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg)}
+details[open] summary::after{margin-top:3px;transform:rotate(225deg)}
+details>div{padding:0 16px 16px;color:var(--mu)}
+.f,.grp{display:grid;gap:10px}.grp{padding:16px}
+input:not([type=checkbox]),textarea,select{width:100%;min-height:46px;padding:11px 14px;border:1px solid var(--ln);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit}
+input[type=color]{padding:4px}textarea{min-height:84px;resize:vertical}
+label{display:grid;gap:6px;font-size:14px;color:var(--mu)}
+label.chk{display:flex;align-items:center;gap:10px;color:var(--tx)}
+.row{display:grid;gap:8px;padding:12px;border:1px solid var(--ln);border-radius:12px}
+.thumb{width:100%;max-height:110px;object-fit:cover;border-radius:10px}
+.kv{display:flex;justify-content:space-between}
+.ft{text-align:center;color:var(--mu);font-size:13px}
+.sheet{position:fixed;inset:0;z-index:9;display:none;align-items:flex-end;justify-content:center;background:rgba(16,24,40,.5)}
+.sheet.on{display:flex}
+.sheet .in{width:100%;max-width:440px;max-height:92%;overflow-y:auto;display:grid;gap:10px;padding:16px 18px calc(20px + env(safe-area-inset-bottom,0px));background:var(--surf);border-radius:24px 24px 0 0;text-align:center}
+#qr{justify-self:center;min-height:60px;padding:14px;background:#fff;border:1px solid var(--ln);border-radius:16px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:10;max-width:calc(100% - 32px);transform:translateX(-50%);padding:11px 18px;border-radius:999px;background:var(--tx);color:var(--bg);font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap"><main id="app"></main></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Share"><div class="in">
+  <h2>Share this card</h2><div id="qr"></div>
+  <a class="btn" id="wa" target="_blank" rel="noopener">Share on WhatsApp</a>
+  <button class="btn alt" id="cp">Copy link</button><button class="btn alt" id="cl">Close</button></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// 1. Paste your own Supabase details here (Project Settings > API).
+const SUPABASE_URL="https://gcquxurtomxbmrpwclka.supabase.co", SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjcXV4dXJ0b214Ym1ycHdjbGthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MTg1NDIsImV4cCI6MjEwNjM5NDU0Mn0.eUY1UslqZk8BtRqgaMm4SdiIdlWr_28BvuB72nL1syw";
+
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=(s,r=document)=>r.querySelector(s), app=$("#app");
+const esc=t=>String(t??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const digits=p=>{const d=String(p||"").replace(/\D/g,"");return d.startsWith("0")?"27"+d.slice(1):d};
+const svg=d=>`<svg viewBox="0 0 24 24">${d}</svg>`;
+const IC={tel:svg('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>'),
+ wa:svg('<path d="M4 5h16v11H9l-5 4z"/>'),mail:svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'),
+ map:svg('<path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+ loc:svg('<circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'),
+ sos:svg('<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>'),
+ sun:svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'),
+ moon:svg('<path d="M20 14A8 8 0 0110 4a8 8 0 1010 10z"/>')};
+const safe=u=>/^https:\/\//.test(u||"")?u:"";
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),2500)};
+const isDark=()=>(document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"))==="dark";
+
+/* ---------- Public card ---------- */
+async function view(slug){
+  const {data:c}=await db.from("cards").select("*").eq("slug",slug).maybeSingle();
+  if(!c){app.innerHTML='<div class="pg"><h1 class="brand">Card not found</h1><p class="mu">This link is not active.</p></div>';return}
+  document.title=c.name;
+  const th=store.get("yc_theme")||(c.theme!=="auto"?c.theme:"");if(th)document.documentElement.dataset.theme=th;
+  document.documentElement.style.setProperty("--ac",/^#[0-9a-f]{6}$/i.test(c.accent)?c.accent:"#0a7d5a");
+  const log=k=>{if(c.published)db.from("events").insert({card_id:c.id,kind:k}).then(()=>{},()=>{})};
+  log("view");
+  const A=[];
+  if(c.panic_phone){A.push(["sos","sos","Panic / emergency line",c.panic_phone,"tel:+"+digits(c.panic_phone)]);A.push(["location","loc","Send my location","Share where you are via WhatsApp","#loc"])}
+  if(c.phone)A.push(["call","tel","Call",c.phone,"tel:+"+digits(c.phone)]);
+  if(c.whatsapp)A.push(["whatsapp","wa","WhatsApp","Message us","https://wa.me/"+digits(c.whatsapp)]);
+  if(c.email)A.push(["email","mail","Email",c.email,"mailto:"+encodeURIComponent(c.email).replace("%40","@")]);
+  if(c.address)A.push(["map","map","Find us",c.address,"https://maps.google.com/?q="+encodeURIComponent(c.address)]);
+  const B=(c.banners||[]).filter(b=>b&&(b.text||b.image_url)),img=B.some(b=>b.image_url),logo=safe(c.logo_url);
+  const ini=c.name.split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+  app.innerHTML=`<div class="top"><button class="ic" id="th" aria-label="Switch light or dark mode"></button></div>
+  <section class="hero"><div class="logo">${logo?`<img src="${esc(logo)}" alt="">`:esc(ini)}</div>
+   <div><h1>${esc(c.name)}</h1><p>${esc(c.role)}</p></div>
+   ${B.length?`<div class="banner${img?" tall":""}" id="bn" aria-live="polite"><span></span></div>`:""}</section>
+  <div class="bar"><button id="save">Save contact</button><button class="alt" id="share">Share</button></div>
+  <div class="acts">${A.map(a=>`<a class="act${a[0]=="sos"?" sos":""}" data-k="${a[0]}" href="${esc(a[4])}" target="_blank" rel="noopener"><i>${IC[a[1]]}</i><span>${a[2]}<small>${esc(a[3])}</small></span><b class="go"></b></a>`).join("")}</div>
+  ${(c.chips||[]).length?`<div class="chips">${c.chips.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+  <details><summary>Send an enquiry</summary><div class="f"><input id="en" aria-label="Your name" placeholder="Your name"><textarea id="em" aria-label="Message" placeholder="How can we help?" maxlength="1000"></textarea><button class="btn" id="es">Send</button></div></details>
+  ${(c.tabs||[]).map((t,i)=>`<details${i?"":" open"}><summary>${esc(t.title)}</summary><div>${esc(t.body)}</div></details>`).join("")}
+  <div class="ft">Made with YeboCard</div>`;
+  const paint=()=>{$("#th").innerHTML=isDark()?IC.sun:IC.moon};paint();
+  $("#th").onclick=()=>{const n=isDark()?"light":"dark";document.documentElement.dataset.theme=n;store.set("yc_theme",n);paint()};
+  if(B.length){let i=0;const e=$("#bn"),show=()=>{const b=B[i%B.length],u=safe(b.image_url);
+    e.style.backgroundImage=u?`linear-gradient(transparent 35%,rgba(0,0,0,.7)),url("${encodeURI(u).replace(/"/g,"%22")}")`:"";e.firstChild.textContent=b.text||""};
+    show();if(B.length>1)setInterval(()=>{i++;show()},4500)}
+  app.querySelectorAll("[data-k]").forEach(a=>a.addEventListener("click",e=>{log(a.dataset.k);if(a.dataset.k=="location"){e.preventDefault();sendLoc()}}));
+  function sendLoc(){if(!navigator.geolocation||!c.whatsapp)return toast("Location sharing is not available");
+    navigator.geolocation.getCurrentPosition(p=>window.open("https://wa.me/"+digits(c.whatsapp)+"?text="+encodeURIComponent("I need help. My location: https://maps.google.com/?q="+p.coords.latitude+","+p.coords.longitude),"_blank"),()=>toast("Allow location access to share where you are"),{timeout:8000})}
+  $("#save").onclick=()=>{log("save");
+    const v=["BEGIN:VCARD","VERSION:3.0","FN:"+c.name,"ORG:"+c.name,"TITLE:"+(c.role||""),c.phone&&"TEL;TYPE=WORK,VOICE:+"+digits(c.phone),c.email&&"EMAIL:"+c.email,c.address&&"ADR;TYPE=WORK:;;"+c.address+";;;;","URL:"+location.href,"END:VCARD"].filter(Boolean).join("\r\n");
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([v],{type:"text/vcard"}));a.download=c.slug+".vcf";a.click()};
+  $("#share").onclick=()=>{log("share");$("#sheet").classList.add("on");const q=$("#qr");q.innerHTML="";
+    try{new QRCode(q,{text:location.href,width:170,height:170})}catch(e){q.textContent="QR unavailable"}
+    $("#wa").href="https://wa.me/?text="+encodeURIComponent(c.name+" – "+location.href)};
+  $("#cp").onclick=()=>navigator.clipboard.writeText(location.href).then(()=>toast("Link copied"),()=>toast("Copy failed"));
+  $("#cl").onclick=()=>$("#sheet").classList.remove("on");
+  $("#es").onclick=async()=>{const n=$("#en").value.trim(),m=$("#em").value.trim();if(!m)return toast("Type your message first");
+    if(c.published)await db.from("leads").insert({card_id:c.id,name:n||null,message:m});log("enquiry");
+    if(c.whatsapp)window.open("https://wa.me/"+digits(c.whatsapp)+"?text="+encodeURIComponent(`Hi ${c.name}, I'm ${n||"a new enquiry"}. ${m}`),"_blank");
+    toast("Enquiry sent");$("#em").value=""};
+}
+
+/* ---------- Owner dashboard ---------- */
+async function admin(){
+  const {data:{session}}=await db.auth.getSession();
+  if(location.hash.includes("access_token"))history.replaceState(null,"",location.pathname);
+  if(!session){
+    app.innerHTML=`<div class="pg"><h1 class="brand">YeboCard</h1><p class="mu">Sign in with your email. We send you a link, so there is no password to remember.</p>
+      <div class="f"><input id="lm" type="email" autocomplete="email" placeholder="you@business.co.za" aria-label="Email"><button class="btn" id="lg">Email me a sign-in link</button></div></div>`;
+    $("#lg").onclick=async()=>{const {error}=await db.auth.signInWithOtp({email:$("#lm").value.trim(),options:{emailRedirectTo:location.origin+"/"}});toast(error?error.message:"Check your email for the link")};
+    return}
+  list(session.user)
+}
+async function list(u){
+  const {data}=await db.from("cards").select("*").order("created_at");
+  app.innerHTML=`<div class="pg"><h1 class="brand">Your cards</h1>
+   ${(data||[]).map((c,i)=>`<button class="act" data-i="${i}"><span>${esc(c.name)}<small>${esc(location.host)}/${esc(c.slug)} · ${c.published?"Live":"Draft"}</small></span><b class="go"></b></button>`).join("")}
+   <button class="btn" id="nw">New card</button><button class="btn alt" id="so">Sign out</button></div>`;
+  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>edit(u,data[b.dataset.i]));
+  $("#nw").onclick=()=>edit(u,{});
+  $("#so").onclick=async()=>{await db.auth.signOut();admin()};
+}
+async function shrink(file,max,type){
+  const im=await createImageBitmap(file),k=Math.min(1,max/Math.max(im.width,im.height)),cv=document.createElement("canvas");
+  cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
+  return new Promise(r=>cv.toBlob(r,type,.85));
+}
+async function edit(u,c){
+  c={name:"",role:"",slug:"",accent:"#0a7d5a",theme:"auto",banners:[],chips:[],tabs:[],published:false,...c};
+  const up=async(file,max,type)=>{const ext=type=="image/png"?"png":"jpg",path=`${u.id}/${crypto.randomUUID()}.${ext}`;
+    const {error}=await db.storage.from("card-media").upload(path,await shrink(file,max,type),{contentType:type,cacheControl:"31536000"});
+    if(error)throw error;return db.storage.from("card-media").getPublicUrl(path).data.publicUrl};
+  const F=(id,l,v,x="")=>`<label>${l}<input id="${id}" value="${esc(v)}" ${x}></label>`;
+  app.innerHTML=`<div class="pg"><button class="btn alt" id="bk">Back</button><h1 class="brand">${c.id?"Edit card":"New card"}</h1>
+  <div class="grp"><h2>Business</h2>${F("name","Business or person name",c.name)}${F("role","What you do and where",c.role)}${F("slug","Link name (your-domain/link-name)",c.slug,'autocapitalize="none"')}${F("chips","Services, separated by commas",(c.chips||[]).join(", "))}</div>
+  <div class="grp"><h2>Contact</h2>${F("phone","Phone",c.phone,'inputmode="tel"')}${F("whatsapp","WhatsApp number",c.whatsapp,'inputmode="tel"')}${F("email","Email",c.email,'inputmode="email"')}${F("address","Address or town",c.address)}${F("panic_phone","Emergency line (optional, adds a panic button)",c.panic_phone,'inputmode="tel"')}</div>
+  <div class="grp"><h2>Look</h2><label>Logo<input id="logo" type="file" accept="image/*"></label><img class="thumb" id="lp" alt="" ${c.logo_url?`src="${esc(c.logo_url)}"`:"hidden"}>
+   <label>Brand colour<input id="accent" type="color" value="${esc(c.accent)}"></label>
+   <label>Card theme<select id="theme">${["auto","light","dark"].map(t=>`<option${t==c.theme?" selected":""}>${t}</option>`).join("")}</select></label></div>
+  <div class="grp"><h2>Promo banners</h2><div id="bns" class="grp" style="padding:0;border:0;box-shadow:none"></div><button class="btn alt" id="ab">Add banner</button></div>
+  <div class="grp"><h2>Info sections</h2><div id="tbs" class="grp" style="padding:0;border:0;box-shadow:none"></div><button class="btn alt" id="at">Add section</button></div>
+  <label class="chk"><input id="pub" type="checkbox"${c.published?" checked":""}> Live: anyone with the link can see it</label>
+  <button class="btn" id="sv">Save</button>${c.id?`<a class="btn alt" href="?c=${esc(c.slug)}" target="_blank">Open card</a><div class="grp" id="st"></div>`:""}</div>`;
+  const drawB=()=>$("#bns").innerHTML=c.banners.map((b,i)=>`<div class="row"><input data-bt="${i}" value="${esc(b.text)}" placeholder="Banner message" aria-label="Banner message">${b.image_url?`<img class="thumb" src="${esc(b.image_url)}" alt="">`:""}<input type="file" accept="image/*" data-bf="${i}" aria-label="Banner image"><button class="btn alt" data-bx="${i}">Remove</button></div>`).join("");
+  const drawT=()=>$("#tbs").innerHTML=c.tabs.map((t,i)=>`<div class="row"><input data-tt="${i}" value="${esc(t.title)}" placeholder="Title" aria-label="Section title"><textarea data-tb="${i}" placeholder="Details" aria-label="Section details">${esc(t.body)}</textarea><button class="btn alt" data-tx="${i}">Remove</button></div>`).join("");
+  drawB();drawT();
+  $("#bk").onclick=()=>list(u);
+  $("#ab").onclick=()=>{if(c.banners.length<5){c.banners.push({text:"",image_url:""});drawB()}};
+  $("#at").onclick=()=>{if(c.tabs.length<6){c.tabs.push({title:"",body:""});drawT()}};
+  $("#bns").addEventListener("input",e=>{if(e.target.dataset.bt!=null)c.banners[e.target.dataset.bt].text=e.target.value});
+  $("#bns").addEventListener("click",e=>{if(e.target.dataset.bx!=null){c.banners.splice(e.target.dataset.bx,1);drawB()}});
+  $("#bns").addEventListener("change",async e=>{const i=e.target.dataset.bf;if(i==null||!e.target.files[0])return;
+    try{toast("Uploading…");c.banners[i].image_url=await up(e.target.files[0],1200,"image/jpeg");drawB();toast("Image added")}catch(x){toast(x.message)}});
+  $("#tbs").addEventListener("input",e=>{const d=e.target.dataset;if(d.tt!=null)c.tabs[d.tt].title=e.target.value;if(d.tb!=null)c.tabs[d.tb].body=e.target.value});
+  $("#tbs").addEventListener("click",e=>{if(e.target.dataset.tx!=null){c.tabs.splice(e.target.dataset.tx,1);drawT()}});
+  $("#logo").onchange=async e=>{if(!e.target.files[0])return;try{toast("Uploading…");c.logo_url=await up(e.target.files[0],512,"image/png");$("#lp").src=c.logo_url;$("#lp").hidden=false;toast("Logo added")}catch(x){toast(x.message)}};
+  $("#sv").onclick=async()=>{const v=id=>$("#"+id).value.trim()||null;
+    const p={name:v("name"),role:v("role")||"",slug:v("slug"),phone:v("phone"),whatsapp:v("whatsapp"),email:v("email"),address:v("address"),panic_phone:v("panic_phone"),
+      chips:$("#chips").value.split(",").map(x=>x.trim()).filter(Boolean),accent:$("#accent").value,theme:$("#theme").value,logo_url:c.logo_url||null,
+      banners:c.banners.filter(b=>b.text||b.image_url),tabs:c.tabs.filter(t=>t.title||t.body),published:$("#pub").checked};
+    if(!p.name)return toast("Add a name first");
+    if(!/^[a-z0-9][a-z0-9-]{2,39}$/.test(p.slug||""))return toast("Link name: 3 to 40 letters, numbers or dashes");
+    const q=c.id?await db.from("cards").update(p).eq("id",c.id).select().single():await db.from("cards").insert(p).select().single();
+    if(q.error)return toast(q.error.code=="23505"?"That link name is taken":q.error.message);
+    toast("Saved");edit(u,q.data)};
+  if(c.id){
+    const {data:s}=await db.rpc("card_stats",{p_card:c.id});
+    const {data:l}=await db.from("leads").select("name,message").eq("card_id",c.id).order("created_at",{ascending:false}).limit(10);
+    $("#st").innerHTML="<h2>Activity</h2>"+((s||[]).map(r=>`<div class="kv"><span>${esc(r.kind)}</span><b>${r.n}</b></div>`).join("")||'<p class="mu">No activity yet.</p>')+"<h2>Latest enquiries</h2>"+((l||[]).map(x=>`<p class="mu"><b>${esc(x.name||"Someone")}</b>: ${esc(x.message)}</p>`).join("")||'<p class="mu">None yet.</p>');
+  }
+}
+
+/* ---------- Router ---------- */
+const seg=location.pathname.split("/").filter(Boolean);
+const slug=new URLSearchParams(location.search).get("c")||(seg.length==1&&/^[a-z0-9][a-z0-9-]{2,39}$/.test(seg[0])?seg[0]:"");
+slug?view(slug):admin();
+</script>
+</body>
+</html>
