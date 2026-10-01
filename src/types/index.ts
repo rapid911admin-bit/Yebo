@@ -1,0 +1,127 @@
+export type UserRole = 'admin' | 'member';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  password?: string;
+  assignedCardId?: string;
+  status: 'active' | 'paused';
+  createdAt: string;
+}
+
+export interface BannerSlide {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  linkUrl?: string;
+  badgeText?: string;
+}
+
+export interface ServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  price?: string; // in ZAR or custom
+  iconName?: string;
+}
+
+export interface SocialLinks {
+  whatsapp?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  instagram?: string;
+  linkedin?: string;
+  facebook?: string;
+  twitter?: string; // X
+  tiktok?: string;
+  youtube?: string;
+  telegram?: string;
+}
+
+export type BusinessCategory =
+  | 'security'
+  | 'restaurant'
+  | 'retail'
+  | 'trades'
+  | 'medical'
+  | 'beauty'
+  | 'real_estate'
+  | 'professional'
+  | 'freelance'
+  | 'community'
+  | 'custom';
+
+export interface CardTheme {
+  primaryColor: string; // brand accent
+  secondaryColor?: string;
+  bgType: 'gradient' | 'image' | 'dark' | 'glass';
+  bgImageUrl?: string;
+  headerImageUrl?: string;
+  darkOverlayOpacity: number; // 0 to 100
+  glassmorphism: boolean;
+}
+
+export interface BusinessCard {
+  id: string;
+  slug: string; // link name e.g. "beepd-communicator" or "zweli-security"
+  businessName: string;
+  tagline: string;
+  businessType: BusinessCategory;
+  businessTypeLabel: string;
+  
+  // Person details
+  contactPersonName: string;
+  designation: string; // Job title
+  
+  // Media
+  logoUrl: string;
+  banners: BannerSlide[];
+  theme: CardTheme;
+  
+  // Contact & Social
+  socialLinks: SocialLinks;
+  emergencyPhone?: string; // For security / medical cards
+  
+  // Sections
+  aboutText: string;
+  services: ServiceItem[];
+  galleryImages: string[];
+  operatingHours: string;
+  
+  // Meta & Status
+  status: 'live' | 'draft';
+  assignedMemberId?: string;
+  viewsCount: number;
+  sharesCount: number;
+  callClicksCount: number;
+  whatsappClicksCount: number;
+  vcardDownloadsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LeadInquiry {
+  id: string;
+  cardId: string;
+  cardName: string;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  createdAt: string;
+  status: 'new' | 'contacted' | 'resolved';
+}
+
+export interface StarterTemplate {
+  id: BusinessCategory;
+  name: string;
+  description: string;
+  icon: string;
+  tag: string;
+  defaultData: Partial<BusinessCard>;
+}

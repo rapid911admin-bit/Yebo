@@ -1,0 +1,6 @@
+{
+  "name": "YeboCard - Smart Business Communicator",
+  "description": "Interactive digital smart business cards and communicator platform with rich image backgrounds, action links, starter templates, and admin management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
