@@ -27,7 +27,8 @@ import {
   Info,
   Phone,
   MessageCircle,
-  Camera,
+  Upload,
+  UserCheck,
 } from 'lucide-react';
 
 import { BusinessCard, LeadInquiry, User } from './types';
@@ -38,7 +39,7 @@ import { AdminMembers } from './components/AdminMembers';
 import { LeadsManager } from './components/LeadsManager';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
 import { AuthModal } from './components/AuthModal';
-import { PhotoCaptureModal } from './components/PhotoCaptureModal';
+import { AllocateCardModal } from './components/AllocateCardModal';
 import {
   dbFetchCards,
   dbSaveCard,
@@ -101,7 +102,8 @@ export default function App() {
   // Modals
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSupabaseModal, setShowSupabaseModal] = useState(false);
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showAllocateModal, setShowAllocateModal] = useState(false);
+  const [cardToAllocate, setCardToAllocate] = useState<BusinessCard | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [dbOnline, setDbOnline] = useState<boolean>(true);
   const [isSyncingDb, setIsSyncingDb] = useState<boolean>(false);
@@ -291,6 +293,90 @@ export default function App() {
     await dbSaveUser(updated);
   };
 
+  const handleDirectPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const size = Math.min(img.width, img.height);
+          const targetDim = 512;
+          canvas.width = targetDim;
+          canvas.height = targetDim;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const startX = (img.width - size) / 2;
+            const startY = (img.height - size) / 2;
+            ctx.drawImage(img, startX, startY, size, size, 0, 0, targetDim, targetDim);
+            const compressed = canvas.toDataURL('image/jpeg', 0.85);
+            await handleUpdateCurrentProfilePhoto(compressed);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Dedicated Card Allocation (System Admin Authorized Only)
+  const handleAllocateCard = async (
+    cardId: string,
+    employeeId: string | null,
+    syncContactInfo: boolean
+  ) => {
+    if (!isAdmin) {
+      showToast('Unauthorized: Only System Administrators can allocate business cards.');
+      return;
+    }
+
+    const targetCard = cards.find((c) => c.id === cardId);
+    if (!targetCard) return;
+
+    const previousEmployee = users.find((u) => u.assignedCardId === cardId);
+    const newEmployee = employeeId ? users.find((u) => u.id === employeeId) : null;
+
+    // 1. Update Card record
+    let updatedCard: BusinessCard = {
+      ...targetCard,
+      assignedMemberId: employeeId || undefined,
+    };
+
+    if (newEmployee && syncContactInfo) {
+      updatedCard = {
+        ...updatedCard,
+        contactPersonName: newEmployee.name,
+        designation: newEmployee.designation || updatedCard.designation,
+        socialLinks: {
+          ...updatedCard.socialLinks,
+          phone: newEmployee.phone || updatedCard.socialLinks.phone,
+          email: newEmployee.email || updatedCard.socialLinks.email,
+        },
+      };
+    }
+
+    setCards((prev) => prev.map((c) => (c.id === cardId ? updatedCard : c)));
+    await dbSaveCard(updatedCard);
+
+    // 2. Clear old employee's assignedCardId if it changed
+    if (previousEmployee && previousEmployee.id !== employeeId) {
+      const clearedPrev = { ...previousEmployee, assignedCardId: undefined };
+      setUsers((prev) => prev.map((u) => (u.id === previousEmployee.id ? clearedPrev : u)));
+      await dbSaveUser(clearedPrev);
+    }
+
+    // 3. Assign to new employee
+    if (newEmployee) {
+      const updatedEmp = { ...newEmployee, assignedCardId: cardId };
+      setUsers((prev) => prev.map((u) => (u.id === newEmployee.id ? updatedEmp : u)));
+      await dbSaveUser(updatedEmp);
+      showToast(`Card "${updatedCard.businessName}" allocated to ${newEmployee.name}!`);
+    } else {
+      showToast(`Card "${updatedCard.businessName}" is now unallocated.`);
+    }
+  };
+
   // Lead submission from public card (synced with central DB)
   const handleLeadSubmit = async (leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>) => {
     const newLead: LeadInquiry = {
@@ -475,15 +561,20 @@ export default function App() {
               <span className="text-[11px] font-bold hidden xl:inline">Face ID</span>
             </button>
 
-            {/* Quick Profile Photo Upload or Camera Selfie */}
-            <button
-              onClick={() => setShowPhotoModal(true)}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1"
-              title="Upload Photo or Take Camera Selfie"
+            {/* Quick Profile Photo Upload (File only, no camera) */}
+            <label
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1 cursor-pointer"
+              title="Upload Profile Picture from Device"
             >
-              <Camera className="w-4 h-4 shrink-0" />
+              <Upload className="w-4 h-4 shrink-0" />
               <span className="text-[11px] font-bold hidden xl:inline">Photo</span>
-            </button>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/jpg"
+                onChange={handleDirectPhotoUpload}
+                className="hidden"
+              />
+            </label>
 
             {/* Explicit Sign Out / Log Out Button */}
             <button
@@ -519,7 +610,7 @@ export default function App() {
         {activeView === 'editor' && isAdmin && (
           <CardEditor
             card={editingCard}
-            members={users.filter((u) => u.role === 'member')}
+            members={users}
             onSave={handleSaveCard}
             onCancel={() => {
               setEditingCard(null);
@@ -539,6 +630,11 @@ export default function App() {
             onUpdateMemberPassword={handleUpdateMemberPassword}
             onAssignCard={handleAssignCard}
             onDeleteMember={handleDeleteMember}
+            onOpenAllocateModal={(cardId) => {
+              const c = cards.find((x) => x.id === cardId) || cards[0];
+              setCardToAllocate(c);
+              setShowAllocateModal(true);
+            }}
           />
         )}
 
@@ -645,15 +741,20 @@ export default function App() {
                                 <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
                                   {card.contactPersonName ? `${card.contactPersonName} · ${card.designation || card.businessTypeLabel}` : card.tagline}
                                 </p>
-                                <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2 font-mono">
+                                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-2 font-mono">
                                   <span>/card/<strong>{card.slug}</strong></span>
                                   <span>•</span>
                                   <span>{card.viewsCount} views</span>
-                                  {assignedMember && (
-                                    <>
-                                      <span>•</span>
-                                      <span className="text-amber-400">User: {assignedMember.name.split(' ')[0]}</span>
-                                    </>
+                                  <span>•</span>
+                                  {assignedMember ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/40 font-sans font-semibold flex items-center gap-1">
+                                      <UserCheck className="w-3 h-3 text-emerald-400" />
+                                      <span>Allocated: {assignedMember.name}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-sans">
+                                      Unallocated
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -661,6 +762,22 @@ export default function App() {
 
                             {/* Card action buttons */}
                             <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              {/* Allocate Card to Employee (System Admin Only) */}
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCardToAllocate(card);
+                                    setShowAllocateModal(true);
+                                  }}
+                                  className="p-1.5 px-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"
+                                  title="Allocate this card to an employee"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                                  <span className="hidden sm:inline">Allocate</span>
+                                </button>
+                              )}
+
                               <button
                                 onClick={() => {
                                   setEditingCard(card);
@@ -803,6 +920,25 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {isAdmin && activeCard && (
+                    <button
+                      onClick={() => {
+                        setCardToAllocate(activeCard);
+                        setShowAllocateModal(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 text-[11px] font-bold transition-colors"
+                      title="Allocate this card to an employee"
+                    >
+                      <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Allocate</span>
+                      {activeCard.assignedMemberId && (
+                        <span className="text-[10px] text-emerald-400 font-normal hidden sm:inline">
+                          ({users.find((u) => u.id === activeCard.assignedMemberId)?.name?.split(' ')[0] || 'Assigned'})
+                        </span>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setActiveView('preview_standalone')}
                     className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1 text-[11px] font-semibold"
@@ -851,14 +987,17 @@ export default function App() {
         }}
       />
 
-      {/* User Profile Photo Upload / Camera Selfie Modal */}
-      <PhotoCaptureModal
-        isOpen={showPhotoModal}
-        onClose={() => setShowPhotoModal(false)}
-        onPhotoSelected={handleUpdateCurrentProfilePhoto}
-        currentPhotoUrl={currentUser.avatarUrl}
-        title={`Update Profile Photo: ${currentUser.name}`}
-      />
+      {/* Allocate Business Card Modal (System Admin Authorized Only) */}
+      {isAdmin && (
+        <AllocateCardModal
+          isOpen={showAllocateModal}
+          onClose={() => setShowAllocateModal(false)}
+          card={cardToAllocate}
+          employees={users}
+          allCards={cards}
+          onAllocate={handleAllocateCard}
+        />
+      )}
       {/* Mobile Bottom Navigation Bar (md:hidden) - Professional Native App UX */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 md:hidden pb-[max(env(safe-area-inset-bottom,0px),6px)] pt-1.5 px-2 shadow-2xl">
         <div className="flex items-center justify-around">

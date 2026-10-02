@@ -36,6 +36,7 @@ interface AdminMembersProps {
   onUpdateMemberPassword: (userId: string, newPassword: string) => void;
   onAssignCard: (userId: string, cardId: string | undefined) => void;
   onDeleteMember: (userId: string) => void;
+  onOpenAllocateModal?: (cardId?: string) => void;
 }
 
 const PRESET_AVATARS = [
@@ -56,6 +57,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
   onUpdateMemberPassword,
   onAssignCard,
   onDeleteMember,
+  onOpenAllocateModal,
 }) => {
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -241,14 +243,25 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons: Add Admin & Add Member */}
+        {/* Action Buttons: Allocate Cards, Add Admin & Add Member */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {onOpenAllocateModal && (
+            <button
+              onClick={() => onOpenAllocateModal()}
+              className="px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+              title="Allocate Company Business Cards to Employees"
+            >
+              <CreditCard className="w-4 h-4 text-amber-400" />
+              <span>Allocate Cards</span>
+            </button>
+          )}
+
           <button
             onClick={() => handleOpenAdd('admin')}
-            className="px-3.5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
           >
             <Shield className="w-4 h-4 text-amber-400" />
-            <span>Add Admin User</span>
+            <span>Add Admin</span>
           </button>
 
           <button
@@ -256,7 +269,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
             className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-950/40 transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Add Member Profile</span>
+            <span>Add Member</span>
           </button>
         </div>
       </div>
@@ -419,18 +432,30 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
                           <span>Full Control (All Cards)</span>
                         </div>
                       ) : (
-                        <select
-                          value={user.assignedCardId || ''}
-                          onChange={(e) => onAssignCard(user.id, e.target.value || undefined)}
-                          className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white max-w-[190px] truncate focus:outline-none focus:border-amber-500"
-                        >
-                          <option value="">-- No Card Assigned --</option>
-                          {cards.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.businessName}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={user.assignedCardId || ''}
+                            onChange={(e) => onAssignCard(user.id, e.target.value || undefined)}
+                            className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-white max-w-[170px] truncate focus:outline-none focus:border-amber-500"
+                          >
+                            <option value="">-- No Card Assigned --</option>
+                            {cards.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.businessName}
+                              </option>
+                            ))}
+                          </select>
+                          {onOpenAllocateModal && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenAllocateModal(user.assignedCardId)}
+                              className="p-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-colors"
+                              title="Detailed Card Allocation"
+                            >
+                              <CreditCard className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
 

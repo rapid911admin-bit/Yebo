@@ -15,6 +15,7 @@ import {
   AlertCircle,
   HelpCircle,
   Check,
+  UserCheck,
 } from 'lucide-react';
 import { BusinessCard, StarterTemplate, User, BannerSlide, ServiceItem } from '../types';
 import { STARTER_TEMPLATES } from '../data/starterTemplates';
@@ -515,17 +516,54 @@ export const CardEditor: React.FC<CardEditorProps> = ({
               />
             </div>
 
-            {/* Logo / Profile Image with real upload & take photo */}
+            {/* Logo / Profile Image with real upload */}
             <div className="pt-2">
               <AvatarUploadField
                 value={formData.logoUrl}
                 onChange={(url) => setFormData({ ...formData, logoUrl: url })}
                 label="Card Logo or Profile Photo"
-                helperText="Upload a logo, headshot, or take a live camera snapshot."
+                helperText="Upload a logo or staff headshot from your device."
               />
               <p className="text-[11px] text-amber-400/90 mt-2 flex items-center gap-1 font-medium">
                 <Info className="w-3.5 h-3.5" />
                 Recommended: Square image 512 × 512 px (1:1 ratio) with clean transparent or dark backdrop.
+              </p>
+            </div>
+
+            {/* Employee Allocation (System Admin Authorized Only) */}
+            <div className="pt-3 border-t border-slate-800">
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Allocate to Company Employee / Member</span>
+                </span>
+                <span className="text-[10px] font-mono text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Admin Authorized
+                </span>
+              </label>
+              <select
+                value={formData.assignedMemberId || ''}
+                onChange={(e) => {
+                  const empId = e.target.value || undefined;
+                  const emp = members.find((m) => m.id === empId);
+                  setFormData({
+                    ...formData,
+                    assignedMemberId: empId,
+                    contactPersonName: emp ? emp.name : formData.contactPersonName,
+                    designation: emp?.designation || formData.designation,
+                  });
+                }}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500 font-medium"
+              >
+                <option value="">-- General / Unallocated (No specific employee) --</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.designation || m.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Allocates this business card to the chosen employee. When the employee logs into the portal, they will only see and share their allocated card.
               </p>
             </div>
           </div>
