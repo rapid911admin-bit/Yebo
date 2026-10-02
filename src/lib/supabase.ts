@@ -40,6 +40,7 @@ export function mapCardToDb(card: BusinessCard): any {
 
   return {
     id: card.id,
+    owner_email: 'zweli@msn.com',
     slug: card.slug,
     // Dual column mapping for maximum compatibility and NOT-NULL constraint satisfaction
     name: businessName,
