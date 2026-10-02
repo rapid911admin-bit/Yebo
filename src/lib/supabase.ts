@@ -137,7 +137,16 @@ export function mapDbToCard(row: any): BusinessCard {
     designation: row.designation || '',
     emergencyPhone: emergencyPhone,
     logoUrl: row.logo_url || '',
-    banners: Array.isArray(row.banners) ? row.banners : [],
+    banners: Array.isArray(row.banners)
+      ? row.banners.map((b: any, idx: number) => ({
+          id: b.id || `banner-${row.id || 'card'}-${idx}`,
+          title: b.title || b.text || '',
+          subtitle: b.subtitle || '',
+          imageUrl: b.imageUrl || b.image_url || '',
+          linkUrl: b.linkUrl || b.link_url || undefined,
+          badgeText: b.badgeText || b.badge_text || undefined,
+        }))
+      : [],
     theme: {
       primaryColor,
       darkOverlayOpacity: 75,

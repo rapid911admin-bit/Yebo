@@ -200,7 +200,7 @@ export const CardView: React.FC<CardViewProps> = ({
         >
           {card.banners.map((banner, idx) => (
             <motion.div
-              key={banner.id}
+              key={banner.id || `banner-slide-${idx}-${banner.imageUrl || idx}`}
               initial={false}
               animate={{
                 opacity: activeBannerIdx === idx ? 1 : 0,
@@ -212,7 +212,7 @@ export const CardView: React.FC<CardViewProps> = ({
             >
               <img
                 src={banner.imageUrl}
-                alt={banner.title}
+                alt={banner.title || `Banner ${idx + 1}`}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
@@ -225,9 +225,11 @@ export const CardView: React.FC<CardViewProps> = ({
                     {banner.badgeText}
                   </span>
                 )}
-                <h4 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 drop-shadow">
-                  {banner.title}
-                </h4>
+                {banner.title && (
+                  <h4 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2 drop-shadow">
+                    {banner.title}
+                  </h4>
+                )}
                 {banner.subtitle && (
                   <p className="text-xs text-slate-300 line-clamp-1 mt-0.5 drop-shadow">
                     {banner.subtitle}
@@ -242,7 +244,7 @@ export const CardView: React.FC<CardViewProps> = ({
             <div className="absolute bottom-1 right-4 flex items-center gap-1.5 z-10">
               {card.banners.map((_, i) => (
                 <button
-                  key={i}
+                  key={`banner-indicator-${i}`}
                   onClick={() => setActiveBannerIdx(i)}
                   aria-label={`Go to slide ${i + 1}`}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
@@ -590,9 +592,9 @@ export const CardView: React.FC<CardViewProps> = ({
               className="space-y-3"
             >
               {card.services && card.services.length > 0 ? (
-                card.services.map((service) => (
+                card.services.map((service, srvIdx) => (
                   <div
-                    key={service.id}
+                    key={service.id || `service-${srvIdx}-${service.title}`}
                     className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all flex flex-col gap-1.5"
                   >
                     <div className="flex items-start justify-between gap-2">
