@@ -241,10 +241,10 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
         </div>
 
         {/* Action Buttons: Add Admin & Add Member */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => handleOpenAdd('admin')}
-            className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            className="px-3.5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
           >
             <Shield className="w-4 h-4 text-amber-400" />
             <span>Add Admin User</span>
@@ -252,7 +252,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
 
           <button
             onClick={() => handleOpenAdd('member')}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-950/40 transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-950/40 transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add Member Profile</span>
@@ -276,12 +276,12 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
       </AnimatePresence>
 
       {/* Filter and Stats Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 w-full">
         {/* Role Filters */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl text-xs font-semibold overflow-x-auto w-full sm:w-auto">
           <button
             onClick={() => setRoleFilter('all')}
-            className={`px-3 py-1.5 rounded-lg transition-colors ${
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               roleFilter === 'all' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -289,7 +289,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
           </button>
           <button
             onClick={() => setRoleFilter('admin')}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors flex items-center gap-1 ${
               roleFilter === 'admin' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -298,7 +298,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
           </button>
           <button
             onClick={() => setRoleFilter('member')}
-            className={`px-3 py-1.5 rounded-lg transition-colors ${
+            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
               roleFilter === 'member' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -307,7 +307,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
         </div>
 
         {/* Search Input */}
-        <div className="relative flex-1 sm:max-w-xs">
+        <div className="relative w-full sm:max-w-xs">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
@@ -320,9 +320,14 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
       </div>
 
       {/* Profiles Table */}
-      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+      <div className="rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden shadow-xl w-full">
+        {/* Mobile horizontal swipe notice */}
+        <div className="px-4 py-2 bg-slate-950/50 border-b border-slate-800/60 flex md:hidden items-center justify-between text-[11px] text-slate-400 font-medium">
+          <span>Swipe table horizontally to view actions</span>
+          <span className="text-amber-400 font-bold font-mono">⇄</span>
+        </div>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full min-w-[650px] text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                 <th className="py-3 px-4">Profile / Contact</th>

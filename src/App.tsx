@@ -255,19 +255,19 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
       {/* Top Main Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 w-full overflow-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Identity */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-red-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-md shadow-amber-950/40">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-red-500 flex items-center justify-center text-slate-950 font-black text-base sm:text-lg shadow-md shadow-amber-950/40 shrink-0">
               Y
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="text-base sm:text-lg font-black tracking-tight text-white">
                   YeboCard
                 </h1>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold font-mono bg-amber-500/20 text-amber-400 border border-amber-500/30 hidden xs:inline-block">
                   Communicator
                 </span>
               </div>
@@ -277,8 +277,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation Items (Admin vs Member) */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          {/* Desktop Navigation Items (Hidden on mobile to eliminate horizontal scrolling) */}
+          <div className="hidden md:flex items-center gap-1 sm:gap-2">
             {isAdmin ? (
               <>
                 <button
@@ -290,7 +290,7 @@ export default function App() {
                   }`}
                 >
                   <CreditCard className="w-4 h-4 text-amber-400" />
-                  <span className="hidden md:inline">Cards</span>
+                  <span>Cards</span>
                 </button>
 
                 <button
@@ -302,7 +302,7 @@ export default function App() {
                   }`}
                 >
                   <Users className="w-4 h-4 text-sky-400" />
-                  <span className="hidden md:inline">Users & Admins</span>
+                  <span>Users & Admins</span>
                   <span className="px-1.5 py-0.2 rounded-full bg-slate-700 text-[10px] font-mono">
                     {users.length}
                   </span>
@@ -317,7 +317,7 @@ export default function App() {
                   }`}
                 >
                   <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  <span className="hidden md:inline">Leads</span>
+                  <span>Leads</span>
                   {leads.filter((l) => l.status === 'new').length > 0 && (
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                   )}
@@ -337,51 +337,54 @@ export default function App() {
                 Member Portal
               </span>
             )}
+          </div>
 
-            {/* Current user pill, Biometric icon & Logout button */}
-            <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-2 py-1 px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs text-slate-200 transition-colors"
-                title="Switch Account or Face ID"
-              >
-                <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px] overflow-hidden shrink-0">
-                  {currentUser.avatarUrl ? (
-                    <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
-                  ) : (
-                    currentUser.name.charAt(0)
+          {/* Current user pill, Biometric icon & Logout button (Always visible on mobile without horizontal scroll) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* User Profile Pill */}
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="flex items-center gap-1.5 sm:gap-2 py-1 px-2 sm:px-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs text-slate-200 transition-colors"
+              title="Switch Account or Profile"
+            >
+              <div className="relative w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px] overflow-hidden shrink-0">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.name.charAt(0)
+                )}
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-bold text-white flex items-center gap-1">
+                  <span className="truncate max-w-[80px]">{currentUser.name.split(' ')[0]}</span>
+                  {isAdmin && (
+                    <span className="text-[9px] uppercase px-1 py-0.2 bg-amber-500/30 text-amber-300 rounded font-mono">
+                      Admin
+                    </span>
                   )}
                 </div>
-                <div className="text-left hidden sm:block">
-                  <div className="text-xs font-bold text-white flex items-center gap-1">
-                    <span>{currentUser.name.split(' ')[0]}</span>
-                    {isAdmin && (
-                      <span className="text-[9px] uppercase px-1 py-0.2 bg-amber-500/30 text-amber-300 rounded font-mono">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
+              </div>
+            </button>
 
-              {/* Biometric Scan Quick Access */}
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 transition-colors"
-                title="Face ID & Biometric Sign In"
-              >
-                <ScanFace className="w-4 h-4" />
-              </button>
+            {/* Biometric Scan Quick Access */}
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1"
+              title="Face ID & Biometric Sign In"
+            >
+              <ScanFace className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] font-bold hidden xl:inline">Face ID</span>
+            </button>
 
-              {/* Explicit Sign Out / Log Out Button */}
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-800/50 text-slate-400 hover:text-red-400 transition-colors"
-                title="Sign Out / Log Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Explicit Sign Out / Log Out Button */}
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-800/50 text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1"
+              title="Sign Out / Log Out"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] font-bold hidden xl:inline">Logout</span>
+            </button>
           </div>
         </div>
       </header>
@@ -402,7 +405,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Main Body Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 pb-24 md:pb-8">
         {/* VIEW 1: CARD EDITOR (Admin Only) */}
         {activeView === 'editor' && isAdmin && (
           <CardEditor
@@ -736,6 +739,84 @@ export default function App() {
           showToast(`Logged in as ${user.name}`);
         }}
       />
+      {/* Mobile Bottom Navigation Bar (md:hidden) - Professional Native App UX */}
+      <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 md:hidden pb-[max(env(safe-area-inset-bottom,0px),6px)] pt-1.5 px-2 shadow-2xl">
+        <div className="flex items-center justify-around">
+          <button
+            onClick={() => setActiveView('dashboard')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+              activeView === 'dashboard'
+                ? 'text-amber-400 font-bold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <CreditCard className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Cards</span>
+          </button>
+
+          {isAdmin ? (
+            <>
+              <button
+                onClick={() => setActiveView('members')}
+                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                  activeView === 'members'
+                    ? 'text-amber-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Users className="w-5 h-5 mb-0.5" />
+                <span className="text-[10px]">Users</span>
+                <span className="absolute top-0.5 right-2 px-1 rounded-full bg-slate-800 text-[8px] font-bold text-amber-400 font-mono border border-slate-700">
+                  {users.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveView('leads')}
+                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                  activeView === 'leads'
+                    ? 'text-amber-400 font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <MessageSquare className="w-5 h-5 mb-0.5" />
+                <span className="text-[10px]">Leads</span>
+                {leads.filter((l) => l.status === 'new').length > 0 && (
+                  <span className="absolute top-1 right-2.5 w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setShowSupabaseModal(true)}
+                className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition-all"
+              >
+                <Database className="w-5 h-5 mb-0.5 text-emerald-400" />
+                <span className="text-[10px]">Supabase</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                activeView === 'dashboard'
+                  ? 'text-amber-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Smartphone className="w-5 h-5 mb-0.5" />
+              <span className="text-[10px]">My Card</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-400 hover:text-slate-200 transition-all"
+          >
+            <ScanFace className="w-5 h-5 mb-0.5 text-amber-400" />
+            <span className="text-[10px]">Face ID</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }
