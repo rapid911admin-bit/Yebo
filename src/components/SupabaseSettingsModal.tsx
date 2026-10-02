@@ -141,8 +141,8 @@ VALUES
   ),
   (
     'user-clint-admin',
-    'clint@rapid911.co.za',
-    'Clint (Rapid 911 Admin)',
+    'clint@brandedbydigital.co.za',
+    'Clinton Proctor (Admin)',
     'admin',
     'password123',
     '+27 82 911 9999',

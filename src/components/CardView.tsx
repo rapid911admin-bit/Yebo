@@ -341,9 +341,18 @@ export const CardView: React.FC<CardViewProps> = ({
         )}
 
         {/* Business Name & Tagline */}
-        <h3 className="text-sm font-bold text-slate-300 mt-1">
-          {card.businessName}
-        </h3>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          {card.logoUrl && card.logoUrl !== memberPhoto && (
+            <img
+              src={card.logoUrl}
+              alt={card.businessName}
+              className="w-5 h-5 rounded-md object-cover border border-slate-700/80 shrink-0 shadow-sm"
+            />
+          )}
+          <h3 className="text-sm font-bold text-slate-200">
+            {card.businessName}
+          </h3>
+        </div>
         {card.tagline && (
           <p className="text-xs text-slate-400 mt-1 px-4 leading-relaxed line-clamp-2">
             {card.tagline}

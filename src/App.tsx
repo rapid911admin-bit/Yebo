@@ -743,23 +743,14 @@ export default function App() {
                                   </span>
                                 </div>
                                 <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                                  {card.contactPersonName ? `${card.contactPersonName} · ${card.designation || card.businessTypeLabel}` : card.tagline}
+                                  {card.tagline || card.businessTypeLabel}
                                 </p>
                                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-2 font-mono">
                                   <span>/card/<strong>{card.slug}</strong></span>
                                   <span>•</span>
-                                  <span>{card.viewsCount} views</span>
+                                  <span>{card.businessTypeLabel || 'Smart Card'}</span>
                                   <span>•</span>
-                                  {assignedMember ? (
-                                    <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/40 font-sans font-semibold flex items-center gap-1">
-                                      <UserCheck className="w-3 h-3 text-emerald-400" />
-                                      <span>Allocated: {assignedMember.name}</span>
-                                    </span>
-                                  ) : (
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-sans">
-                                      Unallocated
-                                    </span>
-                                  )}
+                                  <span>{card.viewsCount} views</span>
                                 </div>
                               </div>
                             </div>
