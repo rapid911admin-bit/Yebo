@@ -55,6 +55,7 @@ export const CardView: React.FC<CardViewProps> = ({
   const [leadForm, setLeadForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [vcardExportedToast, setVcardExportedToast] = useState(false);
 
   // Auto-rotate banners smoothly
   useEffect(() => {
@@ -74,9 +75,13 @@ export const CardView: React.FC<CardViewProps> = ({
     onActionClick?.('share');
   };
 
-  const handleSaveContact = () => {
-    downloadVCard(card);
+  const handleSaveContact = async () => {
     onActionClick?.('vcard');
+    const res = await downloadVCard(card);
+    if (res.success) {
+      setVcardExportedToast(true);
+      setTimeout(() => setVcardExportedToast(false), 4000);
+    }
   };
 
   const handleCall = () => {
@@ -162,6 +167,29 @@ export const CardView: React.FC<CardViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* vCard Exported Toast Notification */}
+      <AnimatePresence>
+        {vcardExportedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mx-3 mt-2 p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-500/50 text-emerald-200 text-xs shadow-lg flex items-center justify-between gap-2 backdrop-blur-md z-30"
+          >
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Contact (.vcf) generated! Save to Contacts app.</span>
+            </div>
+            <button
+              onClick={() => setVcardExportedToast(false)}
+              className="p-1 rounded-lg text-emerald-400 hover:text-white"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Cross-fade Banner Carousel */}
       {card.banners && card.banners.length > 0 && (

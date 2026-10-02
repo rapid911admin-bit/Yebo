@@ -126,20 +126,31 @@ CREATE POLICY "Public can access users"
   WITH CHECK (true);
 
 
--- 5. SEED MASTER ADMIN USER
+-- 5. SEED MASTER ADMIN USERS
 INSERT INTO public.users (id, email, name, role, password, phone, designation, status)
-VALUES (
-  'user-zweli-admin',
-  'zweli@msn.com',
-  'Zweli Mkhize (Master Admin)',
-  'admin',
-  'password123',
-  '+27 82 911 0000',
-  'Managing Director & Operations Head',
-  'active'
-)
+VALUES 
+  (
+    'user-zweli-admin',
+    'zweli@msn.com',
+    'Zweli Mkhize (Master Admin)',
+    'admin',
+    'password123',
+    '+27 82 911 0000',
+    'Managing Director & Operations Head',
+    'active'
+  ),
+  (
+    'user-clint-admin',
+    'clint@rapid911.co.za',
+    'Clint (Rapid 911 Admin)',
+    'admin',
+    'password123',
+    '+27 82 911 9999',
+    'Executive Director & Rapid 911 Admin',
+    'active'
+  )
 ON CONFLICT (email) DO UPDATE
-SET role = 'admin', name = 'Zweli Mkhize (Master Admin)', password = 'password123';
+SET role = 'admin', password = 'password123';
 `;
 
   const handleCopySQL = () => {

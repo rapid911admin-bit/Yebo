@@ -37,6 +37,20 @@ import { AdminMembers } from './components/AdminMembers';
 import { LeadsManager } from './components/LeadsManager';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
 import { AuthModal } from './components/AuthModal';
+import {
+  dbFetchCards,
+  dbSaveCard,
+  dbDeleteCard,
+  dbIncrementCardMetric,
+  dbFetchUsers,
+  dbSaveUser,
+  dbDeleteUser,
+  dbFetchLeads,
+  dbSaveLead,
+  dbUpdateLeadStatus,
+  dbDeleteLead,
+  seedCentralDatabaseIfNeeded,
+} from './lib/supabase';
 
 export default function App() {
   // Persistence state
@@ -86,8 +100,63 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSupabaseModal, setShowSupabaseModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [dbOnline, setDbOnline] = useState<boolean>(true);
+  const [isSyncingDb, setIsSyncingDb] = useState<boolean>(false);
 
-  // Save changes to localStorage
+  // Initial load & central database synchronization
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initCentralDatabase() {
+      setIsSyncingDb(true);
+      try {
+        // Ensure Clint and Zweli exist in database seed
+        await seedCentralDatabaseIfNeeded();
+
+        // 1. Fetch real cards from Central DB
+        const realCards = await dbFetchCards();
+        if (isMounted && realCards.length > 0) {
+          setCards(realCards);
+          setSelectedCardId(realCards[0].id);
+        }
+
+        // 2. Fetch real users from Central DB
+        const realUsers = await dbFetchUsers();
+        if (isMounted && realUsers.length > 0) {
+          setUsers(realUsers);
+          // If Clint isn't in DB yet, ensure he is added and saved
+          if (!realUsers.some((u) => u.email === 'clint@rapid911.co.za')) {
+            const clint = INITIAL_USERS.find((u) => u.email === 'clint@rapid911.co.za');
+            if (clint) {
+              await dbSaveUser(clint);
+              setUsers((prev) => [...prev, clint]);
+            }
+          }
+        }
+
+        // 3. Fetch real leads from Central DB
+        const realLeads = await dbFetchLeads();
+        if (isMounted && realLeads.length > 0) {
+          setLeads(realLeads);
+        }
+
+        if (isMounted) setDbOnline(true);
+      } catch (err) {
+        console.warn('Central DB sync notice:', err);
+        if (isMounted) setDbOnline(false);
+      } finally {
+        if (isMounted) setIsSyncingDb(false);
+      }
+    }
+
+    initCentralDatabase();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Save changes to localStorage as instant offline cache
   useEffect(() => {
     try {
       localStorage.setItem('yebocards_data', JSON.stringify(cards));
@@ -125,8 +194,8 @@ export default function App() {
     ? cards.find((c) => c.id === currentUser.assignedCardId) || cards[0]
     : null;
 
-  // Handlers for cards
-  const handleSaveCard = (savedCard: BusinessCard) => {
+  // Handlers for cards (synced with central DB)
+  const handleSaveCard = async (savedCard: BusinessCard) => {
     setCards((prev) => {
       const exists = prev.some((c) => c.id === savedCard.id);
       if (exists) {
@@ -137,10 +206,12 @@ export default function App() {
     setSelectedCardId(savedCard.id);
     setEditingCard(null);
     setActiveView('dashboard');
-    showToast(`Card "${savedCard.businessName}" saved & published!`);
+    showToast(`Card "${savedCard.businessName}" saved & published to Central DB!`);
+
+    await dbSaveCard(savedCard);
   };
 
-  const handleDeleteCard = (cardId: string) => {
+  const handleDeleteCard = async (cardId: string) => {
     const cardToDelete = cards.find((c) => c.id === cardId);
     if (!cardToDelete) return;
     if (confirm(`Are you sure you want to delete "${cardToDelete.businessName}"?`)) {
@@ -149,45 +220,59 @@ export default function App() {
         const remaining = cards.filter((c) => c.id !== cardId);
         if (remaining.length > 0) setSelectedCardId(remaining[0].id);
       }
-      showToast('Card deleted successfully.');
+      showToast('Card deleted from Central DB.');
+      await dbDeleteCard(cardId);
     }
   };
 
-  // Handlers for members & profiles
-  const handleAddMember = (newMemberData: Omit<User, 'id' | 'createdAt'>) => {
+  // Handlers for members & profiles (synced with central DB)
+  const handleAddMember = async (newMemberData: Omit<User, 'id' | 'createdAt'>) => {
     const newUser: User = {
       ...newMemberData,
       id: `user-${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
     setUsers((prev) => [...prev, newUser]);
+    showToast(`${newUser.role === 'admin' ? 'Admin' : 'Member'} "${newUser.name}" saved to Central DB!`);
+    await dbSaveUser(newUser);
   };
 
-  const handleUpdateUser = (updatedUser: User) => {
+  const handleUpdateUser = async (updatedUser: User) => {
     setUsers((prev) =>
       prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
     );
     if (currentUser.id === updatedUser.id) {
       setCurrentUser(updatedUser);
     }
+    showToast(`Profile "${updatedUser.name}" updated in Central DB.`);
+    await dbSaveUser(updatedUser);
   };
 
-  const handleUpdateMemberPassword = (userId: string, newPass: string) => {
+  const handleUpdateMemberPassword = async (userId: string, newPass: string) => {
+    const targetUser = users.find((u) => u.id === userId);
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, password: newPass } : u))
     );
+    if (targetUser) {
+      await dbSaveUser({ ...targetUser, password: newPass });
+    }
   };
 
-  const handleAssignCard = (userId: string, cardId: string | undefined) => {
+  const handleAssignCard = async (userId: string, cardId: string | undefined) => {
+    const targetUser = users.find((u) => u.id === userId);
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, assignedCardId: cardId } : u))
     );
     showToast('Card assignment updated.');
+    if (targetUser) {
+      await dbSaveUser({ ...targetUser, assignedCardId: cardId });
+    }
   };
 
-  const handleDeleteMember = (userId: string) => {
+  const handleDeleteMember = async (userId: string) => {
     setUsers((prev) => prev.filter((u) => u.id !== userId));
     showToast('Member removed.');
+    await dbDeleteUser(userId);
   };
 
   const handleLogout = () => {
@@ -195,8 +280,8 @@ export default function App() {
     setShowAuthModal(true);
   };
 
-  // Lead submission from public card
-  const handleLeadSubmit = (leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>) => {
+  // Lead submission from public card (synced with central DB)
+  const handleLeadSubmit = async (leadData: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>) => {
     const newLead: LeadInquiry = {
       ...leadData,
       id: `lead-${Date.now()}`,
@@ -204,7 +289,8 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
     setLeads((prev) => [newLead, ...prev]);
-    showToast('Lead inquiry received and logged in Admin!');
+    showToast('Lead inquiry received and saved to Central Database!');
+    await dbSaveLead(newLead);
   };
 
   // Action clicks analytics
@@ -223,6 +309,7 @@ export default function App() {
         };
       })
     );
+    dbIncrementCardMetric(activeCard.id, actionType);
   };
 
   // If in Standalone Card Mode (fullscreen preview for testing client view)
@@ -326,10 +413,11 @@ export default function App() {
                 <button
                   onClick={() => setShowSupabaseModal(true)}
                   className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1.5 transition-colors"
-                  title="Supabase Config"
+                  title="Central Supabase Database Connected"
                 >
                   <Database className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden lg:inline">Supabase</span>
+                  <span className="hidden lg:inline">Central DB</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 </button>
               </>
             ) : (
@@ -437,15 +525,17 @@ export default function App() {
         {activeView === 'leads' && isAdmin && (
           <LeadsManager
             leads={leads}
-            onUpdateStatus={(id, status) => {
+            onUpdateStatus={async (id, status) => {
               setLeads((prev) =>
                 prev.map((l) => (l.id === id ? { ...l, status } : l))
               );
-              showToast('Lead status updated.');
+              showToast('Lead status updated in Central DB.');
+              await dbUpdateLeadStatus(id, status);
             }}
-            onDeleteLead={(id) => {
+            onDeleteLead={async (id) => {
               setLeads((prev) => prev.filter((l) => l.id !== id));
-              showToast('Lead removed.');
+              showToast('Lead removed from Central DB.');
+              await dbDeleteLead(id);
             }}
           />
         )}
