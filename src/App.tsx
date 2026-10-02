@@ -347,11 +347,13 @@ export default function App() {
     if (newEmployee && syncContactInfo) {
       updatedCard = {
         ...updatedCard,
+        logoUrl: newEmployee.avatarUrl || updatedCard.logoUrl,
         contactPersonName: newEmployee.name,
         designation: newEmployee.designation || updatedCard.designation,
         socialLinks: {
           ...updatedCard.socialLinks,
           phone: newEmployee.phone || updatedCard.socialLinks.phone,
+          whatsapp: newEmployee.phone || updatedCard.socialLinks.whatsapp,
           email: newEmployee.email || updatedCard.socialLinks.email,
         },
       };
@@ -429,6 +431,7 @@ export default function App() {
 
         <CardView
           card={activeCard}
+          allocatedMember={users.find((u) => u.id === activeCard.assignedMemberId)}
           onLeadSubmit={handleLeadSubmit}
           onActionClick={handleActionClick}
           isStandalone={true}
@@ -956,6 +959,7 @@ export default function App() {
                 {activeCard ? (
                   <CardView
                     card={activeCard}
+                    allocatedMember={users.find((u) => u.id === activeCard.assignedMemberId)}
                     onLeadSubmit={handleLeadSubmit}
                     onActionClick={handleActionClick}
                   />

@@ -286,12 +286,10 @@ export const AllocateCardModal: React.FC<AllocateCardModalProps> = ({
                   />
                   <div className="text-xs">
                     <span className="font-bold text-white block">
-                      Sync employee details to card contact information
+                      Sync employee profile picture, title & contact details to this card
                     </span>
                     <span className="text-[11px] text-slate-400 block mt-0.5">
-                      Updates Contact Person Name to &quot;{targetEmployee.name}&quot;
-                      {targetEmployee.designation ? `, Title to "${targetEmployee.designation}"` : ''}
-                      {targetEmployee.phone ? `, and Phone to "${targetEmployee.phone}"` : ''}.
+                      The card will display {targetEmployee.name}&apos;s profile photo, job title (&quot;{targetEmployee.designation || 'Staff Member'}&quot;), direct phone, WhatsApp and email.
                     </span>
                   </div>
                 </label>

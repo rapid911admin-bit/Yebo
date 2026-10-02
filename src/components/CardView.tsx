@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Phone,
@@ -12,7 +12,6 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
-  ChevronLeft,
   X,
   Copy,
   Check,
@@ -23,17 +22,18 @@ import {
   Facebook,
   Twitter,
   Youtube,
-  AlertTriangle,
   QrCode,
   ShieldCheck,
+  UserCheck,
   Info,
 } from 'lucide-react';
-import { BusinessCard, LeadInquiry } from '../types';
+import { BusinessCard, LeadInquiry, User } from '../types';
 import { downloadVCard } from '../utils/vcard';
 import { QRCodeSVG } from '../utils/qr';
 
 interface CardViewProps {
   card: BusinessCard;
+  allocatedMember?: User | null;
   onLeadSubmit?: (lead: Omit<LeadInquiry, 'id' | 'createdAt' | 'status'>) => void;
   onActionClick?: (actionType: 'call' | 'whatsapp' | 'share' | 'vcard') => void;
   isStandalone?: boolean;
@@ -41,6 +41,7 @@ interface CardViewProps {
 
 export const CardView: React.FC<CardViewProps> = ({
   card,
+  allocatedMember,
   onLeadSubmit,
   onActionClick,
   isStandalone = false,
@@ -56,6 +57,14 @@ export const CardView: React.FC<CardViewProps> = ({
   const [leadSubmitted, setLeadSubmitted] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [vcardExportedToast, setVcardExportedToast] = useState(false);
+
+  // Resolved dynamic values (prioritizing allocated member info when assigned)
+  const memberPhoto = allocatedMember?.avatarUrl || card.logoUrl;
+  const memberName = allocatedMember?.name || card.contactPersonName;
+  const memberDesignation = allocatedMember?.designation || card.designation;
+  const memberPhone = allocatedMember?.phone || card.socialLinks.phone;
+  const memberWhatsApp = allocatedMember?.phone || card.socialLinks.whatsapp || card.socialLinks.phone;
+  const memberEmail = allocatedMember?.email || card.socialLinks.email;
 
   // Auto-rotate banners smoothly
   useEffect(() => {
@@ -77,7 +86,19 @@ export const CardView: React.FC<CardViewProps> = ({
 
   const handleSaveContact = async () => {
     onActionClick?.('vcard');
-    const res = await downloadVCard(card);
+    const enrichedCard: BusinessCard = {
+      ...card,
+      contactPersonName: memberName || card.contactPersonName,
+      designation: memberDesignation || card.designation,
+      logoUrl: memberPhoto || card.logoUrl,
+      socialLinks: {
+        ...card.socialLinks,
+        phone: memberPhone || card.socialLinks.phone,
+        whatsapp: memberWhatsApp || card.socialLinks.whatsapp,
+        email: memberEmail || card.socialLinks.email,
+      },
+    };
+    const res = await downloadVCard(enrichedCard);
     if (res.success) {
       setVcardExportedToast(true);
       setTimeout(() => setVcardExportedToast(false), 4000);
@@ -86,8 +107,8 @@ export const CardView: React.FC<CardViewProps> = ({
 
   const handleCall = () => {
     onActionClick?.('call');
-    if (card.socialLinks.phone) {
-      window.location.href = `tel:${card.socialLinks.phone}`;
+    if (memberPhone) {
+      window.location.href = `tel:${memberPhone}`;
     }
   };
 
@@ -100,8 +121,8 @@ export const CardView: React.FC<CardViewProps> = ({
 
   const handleWhatsApp = () => {
     onActionClick?.('whatsapp');
-    const waNumber = (card.socialLinks.whatsapp || card.socialLinks.phone || '').replace(/[^0-9]/g, '');
-    const text = encodeURIComponent(`Hi ${card.contactPersonName || card.businessName}, I viewed your YeboCard digital profile and would like to connect.`);
+    const waNumber = (memberWhatsApp || '').replace(/[^0-9]/g, '');
+    const text = encodeURIComponent(`Hi ${memberName || card.businessName}, I viewed your YeboCard digital profile and would like to connect.`);
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
   };
 
@@ -116,7 +137,7 @@ export const CardView: React.FC<CardViewProps> = ({
         name: leadForm.name,
         email: leadForm.email,
         phone: leadForm.phone,
-        message: leadForm.message || 'Direct inquiry submitted from smart card profile.',
+        message: leadForm.message || `Direct inquiry submitted for ${memberName || card.businessName}.`,
       });
       setLeadSubmitting(false);
       setLeadSubmitted(true);
@@ -261,16 +282,16 @@ export const CardView: React.FC<CardViewProps> = ({
 
       {/* Main Header Profile & Brand Section */}
       <div className="px-5 pt-3 pb-4 relative z-10 text-center">
-        {/* Logo Avatar with glow */}
-        <div className="relative inline-block mx-auto mb-3">
+        {/* Allocated Member Profile Picture / Logo Avatar with glow */}
+        <div className="relative inline-block mx-auto mb-2.5">
           <div
             className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden p-1 shadow-xl bg-slate-900/90 border-2"
             style={{ borderColor: primaryColor }}
           >
-            {card.logoUrl ? (
+            {memberPhoto ? (
               <img
-                src={card.logoUrl}
-                alt={card.businessName}
+                src={memberPhoto}
+                alt={memberName || card.businessName}
                 className="w-full h-full object-cover rounded-xl"
               />
             ) : (
@@ -279,27 +300,43 @@ export const CardView: React.FC<CardViewProps> = ({
               </div>
             )}
           </div>
+          
+          {/* Status Badge */}
           <div
-            className="absolute -bottom-1 -right-1 p-1 rounded-full text-white shadow-lg"
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full text-white shadow-lg flex items-center justify-center"
             style={{ backgroundColor: primaryColor }}
-            title="Verified Yebo Communicator"
+            title={allocatedMember ? `Allocated Representative: ${allocatedMember.name}` : 'Verified Yebo Communicator'}
           >
-            <ShieldCheck className="w-4 h-4" />
+            {allocatedMember ? (
+              <UserCheck className="w-3.5 h-3.5" />
+            ) : (
+              <ShieldCheck className="w-3.5 h-3.5" />
+            )}
           </div>
         </div>
 
+        {/* Allocated Representative Pill Badge */}
+        {allocatedMember && (
+          <div className="mb-2 flex items-center justify-center gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+              <UserCheck className="w-3 h-3 text-amber-400" />
+              <span>Allocated Representative</span>
+            </span>
+          </div>
+        )}
+
         {/* Contact Person & Job Title */}
-        {card.contactPersonName && (
+        {memberName && (
           <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight flex items-center justify-center gap-1.5">
-            {card.contactPersonName}
+            {memberName}
           </h2>
         )}
-        {card.designation && (
+        {memberDesignation && (
           <p
             className="text-xs sm:text-sm font-semibold tracking-wide uppercase mt-0.5"
             style={{ color: primaryColor }}
           >
-            {card.designation}
+            {memberDesignation}
           </p>
         )}
 
@@ -367,13 +404,22 @@ export const CardView: React.FC<CardViewProps> = ({
 
         {/* Secondary Contact Quick Pills */}
         <div className="flex flex-wrap items-center justify-center gap-2 mt-3 text-xs">
-          {card.socialLinks.email && (
+          {memberEmail && (
             <a
-              href={`mailto:${card.socialLinks.email}`}
+              href={`mailto:${memberEmail}`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
             >
               <Mail className="w-3.5 h-3.5 text-slate-400" />
-              <span className="truncate max-w-[170px]">{card.socialLinks.email}</span>
+              <span className="truncate max-w-[170px]">{memberEmail}</span>
+            </a>
+          )}
+          {memberPhone && (
+            <a
+              href={`tel:${memberPhone}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/70 hover:bg-slate-800 border border-slate-800 text-slate-300 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="truncate max-w-[150px]">{memberPhone}</span>
             </a>
           )}
           {card.socialLinks.website && (
@@ -405,7 +451,7 @@ export const CardView: React.FC<CardViewProps> = ({
       {/* Social Media Links Bar */}
       <div className="px-5 py-2">
         <div className="flex items-center justify-center gap-2.5 py-2.5 px-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
-          {card.socialLinks.whatsapp && (
+          {memberWhatsApp && (
             <button
               onClick={handleWhatsApp}
               className="p-2 rounded-lg bg-emerald-950/60 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-300 transition-colors"
@@ -650,7 +696,7 @@ export const CardView: React.FC<CardViewProps> = ({
                 <div className="grid grid-cols-2 gap-2.5">
                   {card.galleryImages.map((imgUrl, i) => (
                     <div
-                      key={i}
+                      key={`gallery-${i}-${imgUrl}`}
                       className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 border border-slate-800 shadow"
                     >
                       <img
@@ -683,7 +729,7 @@ export const CardView: React.FC<CardViewProps> = ({
                   Direct Lead & Callback Request
                 </h4>
                 <p className="text-xs text-slate-400 mb-3">
-                  Leave your details and {card.contactPersonName || card.businessName} will respond shortly.
+                  Leave your details and {memberName || card.businessName} will respond shortly.
                 </p>
 
                 {leadSubmitted ? (
