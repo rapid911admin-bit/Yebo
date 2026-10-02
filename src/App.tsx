@@ -27,6 +27,7 @@ import {
   Info,
   Phone,
   MessageCircle,
+  Camera,
 } from 'lucide-react';
 
 import { BusinessCard, LeadInquiry, User } from './types';
@@ -37,6 +38,7 @@ import { AdminMembers } from './components/AdminMembers';
 import { LeadsManager } from './components/LeadsManager';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
 import { AuthModal } from './components/AuthModal';
+import { PhotoCaptureModal } from './components/PhotoCaptureModal';
 import {
   dbFetchCards,
   dbSaveCard,
@@ -99,6 +101,7 @@ export default function App() {
   // Modals
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSupabaseModal, setShowSupabaseModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [dbOnline, setDbOnline] = useState<boolean>(true);
   const [isSyncingDb, setIsSyncingDb] = useState<boolean>(false);
@@ -278,6 +281,14 @@ export default function App() {
   const handleLogout = () => {
     showToast('Signed out successfully.');
     setShowAuthModal(true);
+  };
+
+  const handleUpdateCurrentProfilePhoto = async (dataUrl: string) => {
+    const updated = { ...currentUser, avatarUrl: dataUrl };
+    setCurrentUser(updated);
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    showToast('Profile photo updated & saved to Central DB!');
+    await dbSaveUser(updated);
   };
 
   // Lead submission from public card (synced with central DB)
@@ -462,6 +473,16 @@ export default function App() {
             >
               <ScanFace className="w-4 h-4 shrink-0" />
               <span className="text-[11px] font-bold hidden xl:inline">Face ID</span>
+            </button>
+
+            {/* Quick Profile Photo Upload or Camera Selfie */}
+            <button
+              onClick={() => setShowPhotoModal(true)}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1"
+              title="Upload Photo or Take Camera Selfie"
+            >
+              <Camera className="w-4 h-4 shrink-0" />
+              <span className="text-[11px] font-bold hidden xl:inline">Photo</span>
             </button>
 
             {/* Explicit Sign Out / Log Out Button */}
@@ -828,6 +849,15 @@ export default function App() {
           }
           showToast(`Logged in as ${user.name}`);
         }}
+      />
+
+      {/* User Profile Photo Upload / Camera Selfie Modal */}
+      <PhotoCaptureModal
+        isOpen={showPhotoModal}
+        onClose={() => setShowPhotoModal(false)}
+        onPhotoSelected={handleUpdateCurrentProfilePhoto}
+        currentPhotoUrl={currentUser.avatarUrl}
+        title={`Update Profile Photo: ${currentUser.name}`}
       />
       {/* Mobile Bottom Navigation Bar (md:hidden) - Professional Native App UX */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 md:hidden pb-[max(env(safe-area-inset-bottom,0px),6px)] pt-1.5 px-2 shadow-2xl">

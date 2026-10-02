@@ -25,6 +25,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { BusinessCard, User, UserRole } from '../types';
+import { AvatarUploadField } from './AvatarUploadField';
 
 interface AdminMembersProps {
   members: User[];
@@ -667,33 +668,14 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
                   </div>
                 </div>
 
-                {/* Avatar Picker */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Profile Avatar Photo
-                  </label>
-                  <div className="flex items-center gap-2 mb-2">
-                    {PRESET_AVATARS.map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setNewUser({ ...newUser, avatarUrl: url })}
-                        className={`w-9 h-9 rounded-xl overflow-hidden border-2 transition-all ${
-                          newUser.avatarUrl === url ? 'border-amber-400 scale-105' : 'border-slate-800 opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={url} alt={`Avatar ${idx + 1}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="url"
-                    placeholder="Or paste custom photo URL..."
-                    value={newUser.avatarUrl}
-                    onChange={(e) => setNewUser({ ...newUser, avatarUrl: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                {/* Real Photo Upload & Camera Capture */}
+                <AvatarUploadField
+                  value={newUser.avatarUrl}
+                  onChange={(url) => setNewUser({ ...newUser, avatarUrl: url })}
+                  label="Profile Avatar Photo"
+                  helperText="Upload a real photo, take a camera snapshot, or select a preset."
+                  presetAvatars={PRESET_AVATARS}
+                />
 
                 {/* Assign Card (if Member) */}
                 {newUser.role === 'member' && (
@@ -936,33 +918,14 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
                   />
                 </div>
 
-                {/* Avatar URL & presets */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Profile Avatar Photo
-                  </label>
-                  <div className="flex items-center gap-2 mb-2">
-                    {PRESET_AVATARS.map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setEditFormData({ ...editFormData, avatarUrl: url })}
-                        className={`w-9 h-9 rounded-xl overflow-hidden border-2 transition-all ${
-                          editFormData.avatarUrl === url ? 'border-amber-400 scale-105' : 'border-slate-800 opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={url} alt={`Avatar ${idx + 1}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="url"
-                    value={editFormData.avatarUrl || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, avatarUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                {/* Real Photo Upload & Camera Capture */}
+                <AvatarUploadField
+                  value={editFormData.avatarUrl || ''}
+                  onChange={(url) => setEditFormData({ ...editFormData, avatarUrl: url })}
+                  label="Profile Avatar Photo"
+                  helperText="Upload a real photo, take a camera snapshot, or select a preset."
+                  presetAvatars={PRESET_AVATARS}
+                />
 
                 {/* Bio / Description */}
                 <div>

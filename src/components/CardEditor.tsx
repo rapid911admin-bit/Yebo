@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BusinessCard, StarterTemplate, User, BannerSlide, ServiceItem } from '../types';
 import { STARTER_TEMPLATES } from '../data/starterTemplates';
+import { AvatarUploadField } from './AvatarUploadField';
 
 interface CardEditorProps {
   card?: BusinessCard | null;
@@ -514,28 +515,15 @@ export const CardEditor: React.FC<CardEditorProps> = ({
               />
             </div>
 
-            {/* Logo image & Dimension guidelines */}
+            {/* Logo / Profile Image with real upload & take photo */}
             <div className="pt-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Logo / Profile Image URL
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="url"
-                  value={formData.logoUrl}
-                  onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  className="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-                {formData.logoUrl && (
-                  <img
-                    src={formData.logoUrl}
-                    alt="Logo preview"
-                    className="w-9 h-9 rounded-lg object-cover border border-slate-700"
-                  />
-                )}
-              </div>
-              <p className="text-[11px] text-amber-400/90 mt-1 flex items-center gap-1 font-medium">
+              <AvatarUploadField
+                value={formData.logoUrl}
+                onChange={(url) => setFormData({ ...formData, logoUrl: url })}
+                label="Card Logo or Profile Photo"
+                helperText="Upload a logo, headshot, or take a live camera snapshot."
+              />
+              <p className="text-[11px] text-amber-400/90 mt-2 flex items-center gap-1 font-medium">
                 <Info className="w-3.5 h-3.5" />
                 Recommended: Square image 512 × 512 px (1:1 ratio) with clean transparent or dark backdrop.
               </p>
