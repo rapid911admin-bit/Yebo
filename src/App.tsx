@@ -115,28 +115,29 @@ export default function App() {
     async function initCentralDatabase() {
       setIsSyncingDb(true);
       try {
-        // Ensure Clint and Zweli exist in database seed
+        // Safe seed check: only seeds if tables are empty
         await seedCentralDatabaseIfNeeded();
 
         // 1. Fetch real cards from Central DB
         const realCards = await dbFetchCards();
         if (isMounted && realCards.length > 0) {
           setCards(realCards);
-          setSelectedCardId(realCards[0].id);
+          setSelectedCardId((prev) => {
+            const exists = realCards.some((c) => c.id === prev);
+            return exists ? prev : realCards[0].id;
+          });
         }
 
         // 2. Fetch real users from Central DB
         const realUsers = await dbFetchUsers();
         if (isMounted && realUsers.length > 0) {
           setUsers(realUsers);
-          // If Clint isn't in DB yet, ensure he is added and saved
-          if (!realUsers.some((u) => u.email === 'clint@rapid911.co.za')) {
-            const clint = INITIAL_USERS.find((u) => u.email === 'clint@rapid911.co.za');
-            if (clint) {
-              await dbSaveUser(clint);
-              setUsers((prev) => [...prev, clint]);
-            }
-          }
+          setCurrentUser((prev) => {
+            const freshSelf = realUsers.find(
+              (u) => u.id === prev.id || u.email.toLowerCase() === prev.email.toLowerCase()
+            );
+            return freshSelf || prev;
+          });
         }
 
         // 3. Fetch real leads from Central DB
