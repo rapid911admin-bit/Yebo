@@ -1,0 +1,6 @@
+{
+  "name": "B-Smart Mobile Communicator",
+  "description": "Enterprise digital smart business communicator platform with team member cards, 24/7 operating schedules, QR sharing, NFC, and lead capture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
