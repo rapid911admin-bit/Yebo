@@ -145,6 +145,9 @@ initNeonTables().catch(console.warn);
 
 // Health & Status
 app.get('/api/health', async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   const isNeonConfigured = !!neonSql;
   let isConnected = false;
   if (neonSql) {
@@ -167,6 +170,9 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 
 // COMPANIES API
 app.get('/api/companies', async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   if (!neonSql) return res.json({ companies: [], source: 'local' });
   try {
     const rows = await neonSql`SELECT * FROM companies ORDER BY name ASC`;
@@ -212,6 +218,9 @@ app.post('/api/companies', async (req: Request, res: Response) => {
 
 // CARDS API
 app.get('/api/cards', async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   if (!neonSql) return res.json({ cards: [], source: 'local' });
   try {
     const rows = await neonSql`
@@ -227,6 +236,9 @@ app.get('/api/cards', async (_req: Request, res: Response) => {
 });
 
 app.get('/api/cards/:slugOrId', async (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   const { slugOrId } = req.params;
   if (!neonSql) return res.json({ card: null });
   try {
@@ -348,6 +360,9 @@ app.post('/api/cards/:id/metric', async (req: Request, res: Response) => {
 
 // USERS API
 app.get('/api/users', async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   if (!neonSql) return res.json({ users: [], source: 'local' });
   try {
     const rows = await neonSql`SELECT * FROM users ORDER BY created_at ASC`;
@@ -408,6 +423,9 @@ app.delete('/api/users/:id', async (req: Request, res: Response) => {
 
 // LEADS API
 app.get('/api/leads', async (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   if (!neonSql) return res.json({ leads: [], source: 'local' });
   try {
     const rows = await neonSql`SELECT * FROM leads ORDER BY created_at DESC`;

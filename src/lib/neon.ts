@@ -130,7 +130,7 @@ export function mapDbToLead(row: any): LeadInquiry {
 // COMPANIES
 export async function dbFetchCompanies(): Promise<Company[]> {
   try {
-    const res = await fetch('/api/companies');
+    const res = await fetch(`/api/companies?_t=${Date.now()}`, { cache: 'no-store' });
     const ct = res.headers.get('content-type');
     if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
@@ -172,7 +172,7 @@ export async function dbSaveCompanies(companies: Company[]): Promise<boolean> {
 // CARDS
 export async function dbFetchCards(): Promise<BusinessCard[]> {
   try {
-    const res = await fetch('/api/cards');
+    const res = await fetch(`/api/cards?_t=${Date.now()}`, { cache: 'no-store' });
     const ct = res.headers.get('content-type');
     if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
@@ -201,7 +201,7 @@ export async function dbFetchCards(): Promise<BusinessCard[]> {
 export async function dbFetchCardBySlugOrId(slugOrId: string): Promise<BusinessCard | null> {
   const clean = slugOrId.toLowerCase().trim();
   try {
-    const res = await fetch(`/api/cards/${encodeURIComponent(clean)}`);
+    const res = await fetch(`/api/cards/${encodeURIComponent(clean)}?_t=${Date.now()}`, { cache: 'no-store' });
     const ct = res.headers.get('content-type');
     if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
@@ -271,7 +271,7 @@ export async function dbIncrementCardMetric(
 // USERS
 export async function dbFetchUsers(): Promise<User[]> {
   try {
-    const res = await fetch('/api/users');
+    const res = await fetch(`/api/users?_t=${Date.now()}`, { cache: 'no-store' });
     const ct = res.headers.get('content-type');
     if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
@@ -324,7 +324,7 @@ export async function dbDeleteUser(id: string): Promise<boolean> {
 // LEADS
 export async function dbFetchLeads(): Promise<LeadInquiry[]> {
   try {
-    const res = await fetch('/api/leads');
+    const res = await fetch(`/api/leads?_t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.leads) && data.leads.length > 0) {

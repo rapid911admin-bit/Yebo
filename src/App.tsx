@@ -589,10 +589,10 @@ export default function App() {
       },
     });
 
-    // 2. Periodic live background sync (every 60 seconds - optimized for low egress)
+    // 2. Periodic live background sync (every 15 seconds for rapid cross-browser updates)
     const interval = setInterval(() => {
       syncCentralDatabase(false);
-    }, 60000);
+    }, 15000);
 
     // 3. Tab visibility sync
     const handleVisibility = () => {
