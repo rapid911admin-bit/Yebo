@@ -127,9 +127,10 @@ function pruneHeavyDataUrls(obj: any, maxDepth = 4): any {
 
   const result: any = {};
   for (const [key, val] of Object.entries(obj)) {
-    if (typeof val === 'string' && val.startsWith('data:image/') && val.length > 50000) {
-      // In localStorage quota fallback, avoid storing invalid corrupted fragments;
-      // full pristine 300 DPI image data is safely preserved in IndexedDB.
+    // Preserve banner, logo, and avatar images so they remain visible and saved
+    if (key === 'imageUrl' || key === 'logoUrl' || key === 'bgImageUrl' || key === 'avatarUrl') {
+      result[key] = val;
+    } else if (typeof val === 'string' && val.startsWith('data:image/') && val.length > 500000) {
       result[key] = '';
     } else if (typeof val === 'object' && val !== null) {
       result[key] = pruneHeavyDataUrls(val, maxDepth - 1);

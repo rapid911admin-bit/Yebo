@@ -5,7 +5,8 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  companyId?: string; // Company affiliation (companies can have multiple employees)
+  companyId?: string; // Primary company affiliation
+  companyIds?: string[]; // Multiple company affiliations
   password?: string; // Only administrators have management logins
   assignedCardId?: string; // Direct smart card link
   status: 'active' | 'paused';

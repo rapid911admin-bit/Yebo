@@ -86,12 +86,17 @@ export function mapDbToCompany(row: any): Company {
 }
 
 export function mapDbToUser(row: any): User {
+  let cIds = Array.isArray(row.company_ids) ? row.company_ids : [];
+  if (row.company_id && !cIds.includes(row.company_id)) {
+    cIds = [row.company_id, ...cIds];
+  }
   return {
     id: row.id,
     email: row.email,
     name: row.name,
     role: row.role === 'admin' ? 'admin' : 'employee',
-    companyId: row.company_id || undefined,
+    companyId: row.company_id || cIds[0] || undefined,
+    companyIds: cIds,
     password: row.role === 'admin' ? (row.password || 'password123') : undefined,
     assignedCardId: row.assigned_card_id || undefined,
     status: (row.status as any) || 'active',
@@ -126,7 +131,8 @@ export function mapDbToLead(row: any): LeadInquiry {
 export async function dbFetchCompanies(): Promise<Company[]> {
   try {
     const res = await fetch('/api/companies');
-    if (res.ok) {
+    const ct = res.headers.get('content-type');
+    if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
       if (Array.isArray(data.companies) && data.companies.length > 0) {
         return data.companies.map(mapDbToCompany);
@@ -167,7 +173,8 @@ export async function dbSaveCompanies(companies: Company[]): Promise<boolean> {
 export async function dbFetchCards(): Promise<BusinessCard[]> {
   try {
     const res = await fetch('/api/cards');
-    if (res.ok) {
+    const ct = res.headers.get('content-type');
+    if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
       if (Array.isArray(data.cards) && data.cards.length > 0) {
         return data.cards.map(mapDbToCard);
@@ -195,7 +202,8 @@ export async function dbFetchCardBySlugOrId(slugOrId: string): Promise<BusinessC
   const clean = slugOrId.toLowerCase().trim();
   try {
     const res = await fetch(`/api/cards/${encodeURIComponent(clean)}`);
-    if (res.ok) {
+    const ct = res.headers.get('content-type');
+    if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
       if (data.card) return mapDbToCard(data.card);
     }
@@ -264,7 +272,8 @@ export async function dbIncrementCardMetric(
 export async function dbFetchUsers(): Promise<User[]> {
   try {
     const res = await fetch('/api/users');
-    if (res.ok) {
+    const ct = res.headers.get('content-type');
+    if (res.ok && ct && ct.includes('application/json')) {
       const data = await res.json();
       if (Array.isArray(data.users) && data.users.length > 0) {
         return data.users.map(mapDbToUser);

@@ -63,6 +63,7 @@ async function initNeonTables() {
         name VARCHAR(255) NOT NULL,
         role VARCHAR(32) NOT NULL DEFAULT 'employee',
         company_id VARCHAR(64),
+        company_ids JSONB DEFAULT '[]'::jsonb,
         password TEXT,
         assigned_card_id VARCHAR(64),
         status VARCHAR(32) NOT NULL DEFAULT 'active',
@@ -364,10 +365,10 @@ app.post('/api/users', async (req: Request, res: Response) => {
   }
   try {
     await neonSql`
-      INSERT INTO users (id, email, name, role, company_id, password, assigned_card_id, status, phone, designation, avatar_url, bio, updated_at)
+      INSERT INTO users (id, email, name, role, company_id, company_ids, password, assigned_card_id, status, phone, designation, avatar_url, bio, updated_at)
       VALUES (
         ${user.id}, ${user.email.toLowerCase().trim()}, ${user.name}, ${user.role || 'employee'},
-        ${user.companyId || null}, ${user.password || null}, ${user.assignedCardId || null},
+        ${user.companyId || null}, ${JSON.stringify(user.companyIds || [])}, ${user.password || null}, ${user.assignedCardId || null},
         ${user.status || 'active'}, ${user.phone || ''}, ${user.designation || ''},
         ${user.avatarUrl || ''}, ${user.bio || ''}, NOW()
       )
@@ -376,6 +377,7 @@ app.post('/api/users', async (req: Request, res: Response) => {
         name = EXCLUDED.name,
         role = EXCLUDED.role,
         company_id = EXCLUDED.company_id,
+        company_ids = EXCLUDED.company_ids,
         password = EXCLUDED.password,
         assigned_card_id = EXCLUDED.assigned_card_id,
         status = EXCLUDED.status,

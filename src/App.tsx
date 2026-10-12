@@ -704,6 +704,7 @@ export default function App() {
       ? users.filter(
           (u) =>
             u.companyId === activeCompany.id ||
+            u.companyIds?.includes(activeCompany.id) ||
             companyCards.some((c) => c.assignedMemberId === u.id || u.assignedCardId === c.id)
         )
       : [];
@@ -861,6 +862,25 @@ export default function App() {
 
     setCards(updatedCards);
     safeLocalStorageSet('yebocards_data', JSON.stringify(updatedCards));
+
+    // Ensure users linked to this deleted company are no longer linked (no company assigned)
+    const updatedUsers = users.map((u) => {
+      const isLinked = u.companyId === targetCompany.id || (u.companyIds && u.companyIds.includes(targetCompany.id));
+      if (!isLinked) return u;
+      const newCompanyIds = u.companyIds ? u.companyIds.filter(id => id !== targetCompany.id) : [];
+      const newCompanyId = u.companyId === targetCompany.id ? (newCompanyIds[0] || undefined) : u.companyId;
+      const updatedUser = {
+        ...u,
+        companyId: newCompanyId,
+        companyIds: newCompanyIds,
+        updatedAt: new Date().toISOString(),
+      };
+      dbSaveUser(updatedUser).catch(console.warn);
+      return updatedUser;
+    });
+    setUsers(updatedUsers);
+    safeLocalStorageSet('yebousers_data', JSON.stringify(updatedUsers));
+    await idbSet('users', 'all_users', updatedUsers);
 
     if (selectedCompanyId === targetCompany.id) {
       setSelectedCompanyId(null);

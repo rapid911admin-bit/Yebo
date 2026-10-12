@@ -114,6 +114,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
     email: string;
     role: UserRole;
     companyId: string;
+    companyIds: string[];
     password: string;
     phone: string;
     designation: string;
@@ -126,6 +127,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
     email: '',
     role: 'employee',
     companyId: '',
+    companyIds: [],
     password: '',
     phone: '',
     designation: '',
@@ -155,6 +157,7 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
       email: '',
       role: defaultRole,
       companyId: companies && companies.length > 0 ? companies[0].id : '',
+      companyIds: companies && companies.length > 0 ? [companies[0].id] : [],
       password: defaultRole === 'admin' ? 'password123' : '',
       phone: '',
       designation: defaultRole === 'admin' ? 'System Administrator' : 'Staff Employee',
@@ -217,7 +220,10 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
   const handleStartEdit = (user: User) => {
     setFormError('');
     setEditingUser(user);
-    setEditFormData({ ...user });
+    setEditFormData({
+      ...user,
+      companyIds: user.companyIds || (user.companyId ? [user.companyId] : []),
+    });
   };
 
   // Handle Save Edit Profile
@@ -270,7 +276,8 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
     if (companyFilter !== 'all') {
       const assignedCard = cards.find((c) => c.id === m.assignedCardId);
       const mCompanyId = m.companyId || assignedCard?.companyId;
-      if (mCompanyId !== companyFilter) return false;
+      const mCompanyIds = m.companyIds || (mCompanyId ? [mCompanyId] : []);
+      if (!mCompanyIds.includes(companyFilter)) return false;
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -1036,28 +1043,41 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
                   </div>
                 </div>
 
-                {/* Company Affiliation */}
+                {/* Company Affiliation (Multiple Company Links Supported) */}
                 {companies && companies.length > 0 && (
                   <div>
-                    <label className={`block text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>
-                      Company Affiliation {newUser.role !== 'admin' && '*'}
+                    <label className={`block text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1.5`}>
+                      Company Affiliations (Select one or more) {newUser.role !== 'admin' && '*'}
                     </label>
-                    <select
-                      value={newUser.companyId || ''}
-                      onChange={(e) => setNewUser({ ...newUser, companyId: e.target.value })}
-                      className={`w-full px-3 py-2 rounded-xl ${
-                        isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
-                      } border text-xs focus:outline-none focus:border-amber-500`}
-                    >
-                      <option value="">-- Select Company Affiliation --</option>
-                      {companies.map((c, cIdx) => (
-                        <option key={`new-comp-${c.id}-${cIdx}`} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className={`max-h-36 overflow-y-auto p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'} space-y-2`}>
+                      {companies.map((c, cIdx) => {
+                        const cIds = newUser.companyIds || (newUser.companyId ? [newUser.companyId] : []);
+                        const isSelected = cIds.includes(c.id);
+                        return (
+                          <label key={`new-comp-chk-${c.id}-${cIdx}`} className="flex items-center gap-2.5 cursor-pointer text-xs">
+                            <input
+                              type="checkbox"
+                              checked={!!isSelected}
+                              onChange={(e) => {
+                                const current = newUser.companyIds || (newUser.companyId ? [newUser.companyId] : []);
+                                const next = e.target.checked
+                                  ? Array.from(new Set([...current, c.id]))
+                                  : current.filter(id => id !== c.id);
+                                setNewUser({
+                                  ...newUser,
+                                  companyIds: next,
+                                  companyId: next[0] || '',
+                                });
+                              }}
+                              className="rounded border-slate-700 text-amber-500 focus:ring-amber-500"
+                            />
+                            <span className={isDark ? 'text-slate-200 font-medium' : 'text-slate-800 font-medium'}>{c.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                     <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
-                      Companies can have multiple team members. Team members access profile via link only.
+                      Users can be linked to more than one company.
                     </p>
                   </div>
                 )}
@@ -1351,26 +1371,39 @@ export const AdminMembers: React.FC<AdminMembersProps> = ({
                   </div>
                 </div>
 
-                {/* Company Affiliation */}
-                {companies && companies.length > 0 && (
+                {/* Company Affiliation (Multiple Company Links Supported) */}
+                {companies && companies.length > 0 && editFormData && (
                   <div>
-                    <label className={`block text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1`}>
-                      Company Affiliation
+                    <label className={`block text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-1.5`}>
+                      Company Affiliations (Select one or more)
                     </label>
-                    <select
-                      value={editFormData.companyId || ''}
-                      onChange={(e) => setEditFormData({ ...editFormData, companyId: e.target.value || undefined })}
-                      className={`w-full px-3 py-2 rounded-xl ${
-                        isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
-                      } border text-xs focus:outline-none focus:border-amber-500`}
-                    >
-                      <option value="">-- No Specific Company --</option>
-                      {companies.map((c, cIdx) => (
-                        <option key={`edit-comp-${c.id}-${cIdx}`} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className={`max-h-36 overflow-y-auto p-2.5 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'} space-y-2`}>
+                      {companies.map((c, cIdx) => {
+                        const cIds = editFormData.companyIds || (editFormData.companyId ? [editFormData.companyId] : []);
+                        const isSelected = cIds.includes(c.id);
+                        return (
+                          <label key={`edit-comp-chk-${c.id}-${cIdx}`} className="flex items-center gap-2.5 cursor-pointer text-xs">
+                            <input
+                              type="checkbox"
+                              checked={!!isSelected}
+                              onChange={(e) => {
+                                const current = editFormData.companyIds || (editFormData.companyId ? [editFormData.companyId] : []);
+                                const next = e.target.checked
+                                  ? Array.from(new Set([...current, c.id]))
+                                  : current.filter(id => id !== c.id);
+                                setEditFormData({
+                                  ...editFormData,
+                                  companyIds: next,
+                                  companyId: next[0] || undefined,
+                                });
+                              }}
+                              className="rounded border-slate-700 text-amber-500 focus:ring-amber-500"
+                            />
+                            <span className={isDark ? 'text-slate-200 font-medium' : 'text-slate-800 font-medium'}>{c.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
